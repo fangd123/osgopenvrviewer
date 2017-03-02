@@ -9,11 +9,6 @@
 
 void OpenVRUpdateSlaveCallback::updateSlave(osg::View& view, osg::View::Slave& slave)
 {
-	if (m_cameraType == LEFT_CAMERA)
-	{
-		m_device->updatePose();
-	}
-
 	osg::Vec3 position = m_device->position();
 	osg::Quat orientation = m_device->orientation();
 

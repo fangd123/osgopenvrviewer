@@ -633,6 +633,9 @@ void OpenVRSwapCallback::swapBuffersImplementation(osg::GraphicsContext* gc)
 
 	// Run the default system swapBufferImplementation
 	gc->swapBuffersImplementation();
+
+	// Update poses from HMD
+	m_device->updatePose();
 }
 
 
