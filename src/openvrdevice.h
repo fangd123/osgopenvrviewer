@@ -15,6 +15,7 @@
 #include <osg/Texture2D>
 #include <osg/Version>
 #include <osg/FrameBufferObject>
+#include <osgViewer/Renderer>
 
 #if(OSG_VERSION_GREATER_OR_EQUAL(3, 4, 0))
     typedef osg::GLExtensions OSG_GLExtensions;
@@ -66,6 +67,20 @@ protected:
     GLint m_height;
 };
 
+class OpenVRInitialDrawCallback : public osg::Camera::DrawCallback
+{
+public:
+    virtual void operator()(osg::RenderInfo& renderInfo) const
+    {
+        osg::GraphicsOperation* graphicsOperation = renderInfo.getCurrentCamera()->getRenderer();
+        osgViewer::Renderer* renderer = dynamic_cast<osgViewer::Renderer*>(graphicsOperation);
+        if (renderer != nullptr)
+        {
+            // Disable normal OSG FBO camera setup because it will undo the MSAA FBO configuration.
+            renderer->setCameraRequiresSetUp(false);
+        }
+    }
+};
 
 class OpenVRPreDrawCallback : public osg::Camera::DrawCallback
 {
