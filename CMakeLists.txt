@@ -11,9 +11,9 @@ STRING(COMPARE NOTEQUAL ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR} CMAKE_OUT_OF_SOU
 
 # Relative paths can be trouble when doing out of source builds
 IF(CMAKE_OUT_OF_SOURCE_BUILD)
-	SET(DEFAULT_RELATIVE_PATHS OFF)
+    SET(DEFAULT_RELATIVE_PATHS OFF)
 ELSE()
-	SET(DEFAULT_RELATIVE_PATHS ON)
+    SET(DEFAULT_RELATIVE_PATHS ON)
 ENDIF()
 
 # Show relative paths options 
@@ -25,23 +25,23 @@ OPTION(BUILD_EXAMPLES "Enable to build viewer examples" ON)
 
 
 IF (WIN32)
-	# Path to find OpenSceneGraph
-	SET(OSG_DIR $ENV{OSG_DIR} CACHE PATH "Path where to find the OpenSceneGraph")
-	IF(NOT OSG_DIR)
-		MESSAGE(FATAL_ERROR "Error: OpenSceneGraph not found.")
-	ENDIF(NOT OSG_DIR)
+    # Path to find OpenSceneGraph
+    SET(OSG_DIR $ENV{OSG_DIR} CACHE PATH "Path where to find the OpenSceneGraph")
+    IF(NOT OSG_DIR)
+        MESSAGE(FATAL_ERROR "Error: OpenSceneGraph not found.")
+    ENDIF(NOT OSG_DIR)
 
-	# Where to find OpenSceneGraph third party dependencies
-	SET(OSG_THIRD_PARTY_DIR $ENV{OSG_THIRD_PARTY_DIR} CACHE PATH "Path where to find the OpenSceneGraph third party dependencies")
-	IF(NOT OSG_THIRD_PARTY_DIR)
-		MESSAGE(FATAL_ERROR "Error: OpenSceneGraph 3rd Party Directory not found.")
-	ENDIF(NOT OSG_THIRD_PARTY_DIR)
+    # Where to find OpenSceneGraph third party dependencies
+    SET(OSG_THIRD_PARTY_DIR $ENV{OSG_THIRD_PARTY_DIR} CACHE PATH "Path where to find the OpenSceneGraph third party dependencies")
+    IF(NOT OSG_THIRD_PARTY_DIR)
+        MESSAGE(FATAL_ERROR "Error: OpenSceneGraph 3rd Party Directory not found.")
+    ENDIF(NOT OSG_THIRD_PARTY_DIR)
 
-	# Where to find OpenVR SDK
-	SET(OPENVR_SDK_ROOT_DIR $ENV{OPENVR_SDK_ROOT_DIR} CACHE PATH "Path where to find the OpenVR SDK")
-	IF(NOT OPENVR_SDK_ROOT_DIR)
-		MESSAGE(FATAL_ERROR "Error: OpenVR SDK not found.")
-	ENDIF(NOT OPENVR_SDK_ROOT_DIR)
+    # Where to find OpenVR SDK
+    SET(OPENVR_SDK_ROOT_DIR $ENV{OPENVR_SDK_ROOT_DIR} CACHE PATH "Path where to find the OpenVR SDK")
+    IF(NOT OPENVR_SDK_ROOT_DIR)
+        MESSAGE(FATAL_ERROR "Error: OpenVR SDK not found.")
+    ENDIF(NOT OPENVR_SDK_ROOT_DIR)
 ENDIF(WIN32)
 
 # c++11 features are required
@@ -65,34 +65,34 @@ INCLUDE_DIRECTORIES(BEFORE
 )
 
 IF(VISUAL_STUDIO_EXPRESS)
-	INCLUDE_DIRECTORIES(BEFORE
-		${ATL_INCLUDE_DIR}
-	)
+    INCLUDE_DIRECTORIES(BEFORE
+        ${ATL_INCLUDE_DIR}
+    )
 ENDIF(VISUAL_STUDIO_EXPRESS)
 
 ###############################################################################
 # Compiler Options
 ################################################################################
 IF(MSVC)
-	# Make sure we use minimal windows.h library without min max macros
-	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /D \"WIN32_LEAN_AND_MEAN\"")
-	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /D \"NOMINMAX\"")
+    # Make sure we use minimal windows.h library without min max macros
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /D \"WIN32_LEAN_AND_MEAN\"")
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /D \"NOMINMAX\"")
 
-	# Use Link Time Code Generation
-	SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /LTCG")
+    # Use Link Time Code Generation
+    SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /LTCG")
 
-	OPTION(BUILD_MULTI_PROCESSOR_COMPILATION "Use multiple processors when compiling" ON)
-	MARK_AS_ADVANCED(BUILD_MULTI_PROCESSOR_COMPILATION)
+    OPTION(BUILD_MULTI_PROCESSOR_COMPILATION "Use multiple processors when compiling" ON)
+    MARK_AS_ADVANCED(BUILD_MULTI_PROCESSOR_COMPILATION)
 
-	IF(BUILD_MULTI_PROCESSOR_COMPILATION)
-		# Set multi processor build
-		SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
-	ENDIF(BUILD_MULTI_PROCESSOR_COMPILATION)
-	# Set warnings to level 4 
-	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
-	IF (WARNINGS_AS_ERRORS)
-		SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /WX")
-	ENDIF (WARNINGS_AS_ERRORS)
+    IF(BUILD_MULTI_PROCESSOR_COMPILATION)
+        # Set multi processor build
+        SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
+    ENDIF(BUILD_MULTI_PROCESSOR_COMPILATION)
+    # Set warnings to level 4 
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
+    IF (WARNINGS_AS_ERRORS)
+        SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /WX")
+    ENDIF (WARNINGS_AS_ERRORS)
 ENDIF(MSVC)
 
 ###############################################################################

@@ -17,11 +17,11 @@ class OpenVRDevice;
 class OpenVREventHandler : public osgGA::GUIEventHandler
 {
 public:
-	explicit OpenVREventHandler(osg::ref_ptr<OpenVRDevice> device) : m_openvrDevice(device), m_usePositionalTracking(true) {}
-	virtual bool handle(const osgGA::GUIEventAdapter& ea,osgGA::GUIActionAdapter&);
+    explicit OpenVREventHandler(osg::ref_ptr<OpenVRDevice> device) : m_openvrDevice(device), m_usePositionalTracking(true) {}
+    virtual bool handle(const osgGA::GUIEventAdapter& ea,osgGA::GUIActionAdapter&);
 protected:
-	osg::ref_ptr<OpenVRDevice> m_openvrDevice;
-	bool m_usePositionalTracking;
+    osg::ref_ptr<OpenVRDevice> m_openvrDevice;
+    bool m_usePositionalTracking;
 
 };
 

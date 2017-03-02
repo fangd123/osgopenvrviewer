@@ -16,47 +16,47 @@ SET(OPENVR_SDK_ROOT_DIR
 
 # Look for the header file.
 FIND_PATH(OPENVR_SDK_INCLUDE_DIRS NAMES openvr.h HINTS 
-	${OPENVR_SDK_ROOT_DIR}/headers )
+    ${OPENVR_SDK_ROOT_DIR}/headers )
 
 # Determine architecture
 IF(CMAKE_SIZEOF_VOID_P MATCHES "8")
-	IF(MSVC)
-		SET(_OPENVR_SDK_LIB_ARCH "win64")
-	ENDIF()
+    IF(MSVC)
+        SET(_OPENVR_SDK_LIB_ARCH "win64")
+    ENDIF()
 ELSE()
-	IF(MSVC)
-		SET(_OPENVR_SDK_LIB_ARCH "win32")
-	ENDIF()
+    IF(MSVC)
+        SET(_OPENVR_SDK_LIB_ARCH "win32")
+    ENDIF()
 ENDIF()
 
 MARK_AS_ADVANCED(_OPENVR_SDK_LIB_ARCH)
 
 # Append "d" to debug libs on windows platform
 IF (WIN32)
-	SET(CMAKE_DEBUG_POSTFIX d)
+    SET(CMAKE_DEBUG_POSTFIX d)
 ENDIF()
 
 # Determine the compiler version for Visual Studio
 IF (MSVC)
-	# Visual Studio 2010
-	IF(MSVC10)
-		SET(_OPENVR_MSVC_DIR "VS2010")
-	ENDIF()
-	# Visual Studio 2012
-	IF(MSVC11)
-		SET(_OPENVR_MSVC_DIR "VS2012")
-	ENDIF()
-	# Visual Studio 2013
-	IF(MSVC12)
-		SET(_OPENVR_MSVC_DIR "VS2013")
-	ENDIF()
+    # Visual Studio 2010
+    IF(MSVC10)
+        SET(_OPENVR_MSVC_DIR "VS2010")
+    ENDIF()
+    # Visual Studio 2012
+    IF(MSVC11)
+        SET(_OPENVR_MSVC_DIR "VS2012")
+    ENDIF()
+    # Visual Studio 2013
+    IF(MSVC12)
+        SET(_OPENVR_MSVC_DIR "VS2013")
+    ENDIF()
 ENDIF()
 
 
 # Locate OpenVR license file
 SET(_OPENVR_SDK_LICENSE_FILE "${OPENVR_SDK_ROOT_DIR}/LICENSE")
 IF(EXISTS "${_OPENVR_SDK_LICENSE_FILE}") 
-	SET(OPENVR_SDK_LICENSE_FILE "${_OPENVR_SDK_LICENSE_FILE}" CACHE INTERNAL "The location of the OpenVR SDK license file")
+    SET(OPENVR_SDK_LICENSE_FILE "${_OPENVR_SDK_LICENSE_FILE}" CACHE INTERNAL "The location of the OpenVR SDK license file")
 ENDIF()
 
 # Look for the library.
