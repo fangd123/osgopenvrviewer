@@ -16,6 +16,9 @@
 #include <osg/Version>
 #include <osg/FrameBufferObject>
 #include <osgViewer/Renderer>
+#include <osg/Program>
+#include <osg/Shader>  
+
 
 #if(OSG_VERSION_GREATER_OR_EQUAL(3, 4, 0))
     typedef osg::GLExtensions OSG_GLExtensions;
@@ -125,6 +128,21 @@ public:
         RIGHT = 1,
         COUNT = 2
     } Eye;
+
+	// VR 环境模型
+	osg::ref_ptr<osg::Node> sceneNode;
+	osg::ref_ptr<osg::Node> controllerNode;
+	osg::ref_ptr<osg::Node> renderModelNode;
+	osg::ref_ptr<osg::Node> companionWindowNode;
+	CGLRenderModel *m_rTrackedDeviceToRenderModel[vr::k_unMaxTrackedDeviceCount];
+
+
+	bool CreateAllShaders(osg::ref_ptr<osg::StateSet> sceneStateSet, 
+		osg::ref_ptr<osg::StateSet> controllerStateSet,
+		osg::ref_ptr<osg::StateSet> renderModelStateSet, 
+		osg::ref_ptr<osg::StateSet> companionWindowStateSet);
+	void SetupRenderModels();
+	bool BInitEnv();
     OpenVRDevice(float nearClip, float farClip, const float worldUnitsPerMetre = 1.0f, const int samples = 0);
     void createRenderBuffers(osg::ref_ptr<osg::State> state);
     void init();
@@ -216,5 +234,26 @@ private:
     int m_frameIndex;
 };
 
+class COSGRenderModel
+{
+public:
+	COSGRenderModel(const std::string & sRenderModelName);
+	~COSGRenderModel();
+
+	bool BInit(const vr::RenderModel_t & vrModel, const vr::RenderModel_TextureMap_t & vrDiffuseTexture);
+	void Cleanup();
+	void Draw();
+	const std::string & GetName() const { return m_sModelName; }
+
+private:
+	GLuint m_glVertBuffer;
+	GLuint m_glIndexBuffer;
+	GLuint m_glVertArray;
+	GLuint m_glTexture;
+	GLsizei m_unVertexCount;
+	std::string m_sModelName;
+};
+
+static bool g_bPrintf = true;
 
 #endif /* _OSG_OPENVRDEVICE_H_ */

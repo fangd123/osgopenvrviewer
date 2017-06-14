@@ -242,6 +242,206 @@ void OpenVRMirrorTexture::destroy(osg::GraphicsContext* gc)
     }
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: Creates all the shaders used by VR
+//-----------------------------------------------------------------------------
+bool OpenVRDevice::CreateAllShaders(osg::ref_ptr<osg::StateSet> sceneStateSet, 
+	osg::ref_ptr<osg::StateSet> controllerStateSet, 
+	osg::ref_ptr<osg::StateSet> renderModelStateSet, 
+	osg::ref_ptr<osg::StateSet> companionWindowStateSet)
+{
+	char * sceneVertexShader = {
+		// Vertex Shader
+		"#version 410\n"
+		"uniform mat4 matrix;\n"
+		"layout(location = 0) in vec4 position;\n"
+		"layout(location = 1) in vec2 v2UVcoordsIn;\n"
+		"layout(location = 2) in vec3 v3NormalIn;\n"
+		"out vec2 v2UVcoords;\n"
+		"void main()\n"
+		"{\n"
+		"	v2UVcoords = v2UVcoordsIn;\n"
+		"	gl_Position = matrix * position;\n"
+		"}\n"
+	};
+	char * sceneFragShader = {
+		// Fragment Shader
+		"#version 410 core\n"
+		"uniform sampler2D mytexture;\n"
+		"in vec2 v2UVcoords;\n"
+		"out vec4 outputColor;\n"
+		"void main()\n"
+		"{\n"
+		"   outputColor = texture(mytexture, v2UVcoords);\n"
+		"}\n"
+	};
+
+	char * controllerVertexShader = {
+		// vertex shader
+		"#version 410\n"
+		"uniform mat4 matrix;\n"
+		"layout(location = 0) in vec4 position;\n"
+		"layout(location = 1) in vec3 v3ColorIn;\n"
+		"out vec4 v4Color;\n"
+		"void main()\n"
+		"{\n"
+		"	v4Color.xyz = v3ColorIn; v4Color.a = 1.0;\n"
+		"	gl_Position = matrix * position;\n"
+		"}\n"
+	};
+	char * controllerFragShader = {
+		// fragment shader
+		"#version 410\n"
+		"in vec4 v4Color;\n"
+		"out vec4 outputColor;\n"
+		"void main()\n"
+		"{\n"
+		"   outputColor = v4Color;\n"
+		"}\n"
+	};
+
+	char * renderModelVertexShader = {
+
+		// vertex shader
+		"#version 410\n"
+		"uniform mat4 matrix;\n"
+		"layout(location = 0) in vec4 position;\n"
+		"layout(location = 1) in vec3 v3NormalIn;\n"
+		"layout(location = 2) in vec2 v2TexCoordsIn;\n"
+		"out vec2 v2TexCoord;\n"
+		"void main()\n"
+		"{\n"
+		"	v2TexCoord = v2TexCoordsIn;\n"
+		"	gl_Position = matrix * vec4(position.xyz, 1);\n"
+		"}\n"
+	};
+
+	char * renderModelFragShader = {
+
+		//fragment shader
+		"#version 410 core\n"
+		"uniform sampler2D diffuse;\n"
+		"in vec2 v2TexCoord;\n"
+		"out vec4 outputColor;\n"
+		"void main()\n"
+		"{\n"
+		"   outputColor = texture( diffuse, v2TexCoord);\n"
+		"}\n"
+
+	};
+
+	char * companionWindowVertexShader = {
+
+		// vertex shader
+		"#version 410 core\n"
+		"layout(location = 0) in vec4 position;\n"
+		"layout(location = 1) in vec2 v2UVIn;\n"
+		"noperspective out vec2 v2UV;\n"
+		"void main()\n"
+		"{\n"
+		"	v2UV = v2UVIn;\n"
+		"	gl_Position = position;\n"
+		"}\n"
+	};
+
+	char * companionWindowFragShader = {
+		// fragment shader
+		"#version 410 core\n"
+		"uniform sampler2D mytexture;\n"
+		"noperspective in vec2 v2UV;\n"
+		"out vec4 outputColor;\n"
+		"void main()\n"
+		"{\n"
+		"		outputColor = texture(mytexture, v2UV);\n"
+		"}\n"
+	};
+
+	//TODO 创建一个program数组
+
+	osg::ref_ptr<osg::Program> sceneProgram = new osg::Program;
+	if (!sceneProgram->addShader(new osg::Shader(osg::Shader::FRAGMENT, sceneFragShader))
+		|| !sceneProgram->addShader(new osg::Shader(osg::Shader::VERTEX, sceneVertexShader)))
+	{
+		printf("无法创建场景着色器");
+		return false;
+	}
+
+	sceneStateSet->setAttributeAndModes(sceneProgram.get());
+
+	osg::ref_ptr<osg::Program> controllerProgram = new osg::Program;
+
+	if (!controllerProgram->addShader(new osg::Shader(osg::Shader::FRAGMENT, controllerFragShader))
+		|| !controllerProgram->addShader(new osg::Shader(osg::Shader::VERTEX, controllerVertexShader)))
+	{
+		printf("无法创建控制器着色器");
+		return false;
+	}
+
+	controllerStateSet->setAttributeAndModes(controllerProgram.get());
+
+	osg::ref_ptr<osg::Program> renderModelProgram = new osg::Program;
+	if (!renderModelProgram->addShader(new osg::Shader(osg::Shader::FRAGMENT, renderModelFragShader))
+		|| !renderModelProgram->addShader(new osg::Shader(osg::Shader::VERTEX, renderModelVertexShader)))
+	{
+		printf("无法创建渲染模型着色器");
+		return false;
+	}
+
+	renderModelStateSet->setAttributeAndModes(renderModelProgram.get());
+
+	osg::ref_ptr<osg::Program> companionWindowProgram = new osg::Program;
+	if (!companionWindowProgram->addShader(new osg::Shader(osg::Shader::FRAGMENT, companionWindowFragShader))
+		|| !companionWindowProgram->addShader(new osg::Shader(osg::Shader::VERTEX, companionWindowVertexShader)))
+	{
+		printf("无法创建companionWindow着色器");
+		return false;
+	}
+	renderModelStateSet->setAttributeAndModes(companionWindowProgram.get());
+	
+	return true;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Create/destroy GL Render Models
+//-----------------------------------------------------------------------------
+void OpenVRDevice::SetupRenderModels()
+{
+	memset(m_rTrackedDeviceToRenderModel, 0, sizeof(m_rTrackedDeviceToRenderModel));
+
+	if (!m_pHMD)
+		return;
+
+	for (uint32_t unTrackedDevice = vr::k_unTrackedDeviceIndex_Hmd + 1; unTrackedDevice < vr::k_unMaxTrackedDeviceCount; unTrackedDevice++)
+	{
+		if (!m_pHMD->IsTrackedDeviceConnected(unTrackedDevice))
+			continue;
+
+		SetupRenderModelForTrackedDevice(unTrackedDevice);
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Initialize VR Env. Returns true if VR Env has been successfully
+//          initialized, false if shaders could not be created.
+//          If failure occurred in a module other than shaders, the function
+//          may return true or throw an error. 
+//-----------------------------------------------------------------------------
+bool OpenVRDevice::BInitEnv()
+{
+	osg::ref_ptr<osg::StateSet> sceneStateSet = sceneNode->getOrCreateStateSet();
+	osg::ref_ptr<osg::StateSet> controllerStateSet = controllerNode->getOrCreateStateSet();
+	osg::ref_ptr<osg::StateSet> renderModelStateSet = renderModelNode->getOrCreateStateSet();
+	osg::ref_ptr<osg::StateSet> companionWindowStateSet = companionWindowNode->getOrCreateStateSet();
+
+	if( !CreateAllShaders(sceneStateSet,controllerStateSet, 
+		renderModelStateSet,companionWindowStateSet) )
+		return false;
+	//SetupCompanionWindow();
+	SetupRenderModels();
+
+	return true;
+}
+
 OpenVRDevice::OpenVRDevice(float nearClip, float farClip, const float worldUnitsPerMetre, const int samples) :
     m_vrSystem(nullptr),
     m_vrRenderModels(nullptr),
@@ -296,6 +496,11 @@ OpenVRDevice::OpenVRDevice(float nearClip, float farClip, const float worldUnits
 
     osg::notify(osg::NOTICE) << "HMD driver name: "<< driverName << std::endl;
     osg::notify(osg::NOTICE) << "HMD device serial number: " << deviceSerialNumber << std::endl;
+
+	if (!BInitEnv())
+	{
+		printf("%s - Unable to initialize OpenGL!\n", __FUNCTION__);
+	}
 }
 
 std::string OpenVRDevice::GetDeviceProperty(vr::TrackedDeviceProperty prop)
@@ -620,6 +825,111 @@ void OpenVRSwapCallback::swapBuffersImplementation(osg::GraphicsContext* gc)
 
     // Update poses from HMD
     m_device->updatePose();
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: Create/destroy GL Render Models
+//-----------------------------------------------------------------------------
+COSGRenderModel::COSGRenderModel(const std::string & sRenderModelName)
+	: m_sModelName(sRenderModelName)
+{
+	m_glIndexBuffer = 0;
+	m_glVertArray = 0;
+	m_glVertBuffer = 0;
+	m_glTexture = 0;
+}
+
+
+COSGRenderModel::~COSGRenderModel()
+{
+	Cleanup();
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: Allocates and populates the GL resources for a render model
+//-----------------------------------------------------------------------------
+bool COSGRenderModel::BInit(const vr::RenderModel_t & vrModel, const vr::RenderModel_TextureMap_t & vrDiffuseTexture)
+{
+	// create and bind a VAO to hold state for this model
+	osg::ref_ptr<osg::Vec3Array> vertices = new osg::Vec3Array;
+	osg::ref_ptr<osg::Vec3Array> normals = new osg::Vec3Array;
+	osg::ref_ptr<osg::Vec2Array> texcoords = new osg::Vec2Array;
+	osg::ref_ptr<osg::UByteArray> vertIndexes = new osg::UByteArray;
+
+	for (int i = 0; i < vrModel.unVertexCount ; ++i)
+	{
+		vertices->push_back(osg::Vec3(vrModel.rVertexData[i].vPosition.v[i], vrModel.rVertexData[i].vPosition.v[1], vrModel.rVertexData[i].vPosition.v[2]));
+		normals->push_back(osg::Vec3(vrModel.rVertexData[i].vNormal.v[0], vrModel.rVertexData[i].vNormal.v[1], vrModel.rVertexData[i].vNormal.v[2]));
+		texcoords->push_back(osg::Vec2(vrModel.rVertexData[i].rfTextureCoord[0], vrModel.rVertexData[i].rfTextureCoord[1]));
+	}
+
+	for (int i = 0; i < vrModel.unTriangleCount * 3; ++i)
+	{
+		vertIndexes->push_back(vrModel.rIndexData[i]);
+	}
+
+	osg::Texture2D* tex2D = new osg::Texture2D;
+	tex2D->setTextureWidth(vrDiffuseTexture.unWidth);
+	tex2D->setTextureHeight(vrDiffuseTexture.unHeight);
+	tex2D->setInternalFormat(GL_RGBA);
+	// 载入具体的图片数据
+	tex2D->setImage(vrDiffuseTexture.rubTextureMapData);
+	tex2D->setWrap(osg::Texture::WRAP_S, osg::Texture::CLAMP_TO_EDGE);
+	tex2D->setWrap(osg::Texture::WRAP_T, osg::Texture::CLAMP_TO_EDGE);
+	tex2D->setFilter(osg::Texture::MAG_FILTER, osg::Texture::LINEAR);
+	tex2D->setFilter(osg::Texture::MIN_FILTER, osg::Texture::LINEAR_MIPMAP_LINEAR);
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, vrDiffuseTexture.unWidth, vrDiffuseTexture.unHeight,
+		0, GL_RGBA, GL_UNSIGNED_BYTE, vrDiffuseTexture.rubTextureMapData);
+
+	// If this renders black ask McJohn what's wrong.
+	glGenerateMipmap(GL_TEXTURE_2D);
+
+
+	GLfloat fLargest;
+	glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &fLargest);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, fLargest);
+
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	m_unVertexCount = vrModel.unTriangleCount * 3;
+
+	return true;
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: Frees the GL resources for a render model
+//-----------------------------------------------------------------------------
+void COSGRenderModel::Cleanup()
+{
+	if (m_glVertBuffer)
+	{
+		glDeleteBuffers(1, &m_glIndexBuffer);
+		glDeleteVertexArrays(1, &m_glVertArray);
+		glDeleteBuffers(1, &m_glVertBuffer);
+		m_glIndexBuffer = 0;
+		m_glVertArray = 0;
+		m_glVertBuffer = 0;
+	}
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: Draws the render model
+//-----------------------------------------------------------------------------
+void COSGRenderModel::Draw()
+{
+	glBindVertexArray(m_glVertArray);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, m_glTexture);
+
+	glDrawElements(GL_TRIANGLES, m_unVertexCount, GL_UNSIGNED_SHORT, 0);
+
+	glBindVertexArray(0);
 }
 
 
