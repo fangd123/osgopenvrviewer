@@ -28,6 +28,29 @@
     typedef osg::Texture::Extensions OSG_Texture_Extensions;
 #endif
 
+class COSGRenderModel
+{
+public:
+	COSGRenderModel(const std::string & sRenderModelName);
+	~COSGRenderModel();
+
+	bool BInit(const vr::RenderModel_t & vrModel, const vr::RenderModel_TextureMap_t & vrDiffuseTexture);
+	void Cleanup();
+	void Draw();
+	const std::string & GetName() const { return m_sModelName; }
+
+private:
+	osg::ref_ptr<osg::Vec3Array> vertices;
+	osg::ref_ptr<osg::Vec3Array> normals;
+	osg::ref_ptr<osg::Vec2Array> texcoords;
+	osg::ref_ptr<osg::UByteArray> vertIndexes;
+	osg::Texture2D* tex2D;
+	GLsizei m_unVertexCount;
+	std::string m_sModelName;
+};
+
+static bool g_bPrintf = true;
+
 class OpenVRTextureBuffer : public osg::Referenced
 {
 public:
@@ -134,13 +157,18 @@ public:
 	osg::ref_ptr<osg::Node> controllerNode;
 	osg::ref_ptr<osg::Node> renderModelNode;
 	osg::ref_ptr<osg::Node> companionWindowNode;
-	CGLRenderModel *m_rTrackedDeviceToRenderModel[vr::k_unMaxTrackedDeviceCount];
+	COSGRenderModel *m_rTrackedDeviceToRenderModel[vr::k_unMaxTrackedDeviceCount];
+	std::vector< COSGRenderModel * > m_vecRenderModels;
+	bool m_rbShowTrackedDevice[vr::k_unMaxTrackedDeviceCount];
 
 
 	bool CreateAllShaders(osg::ref_ptr<osg::StateSet> sceneStateSet, 
 		osg::ref_ptr<osg::StateSet> controllerStateSet,
 		osg::ref_ptr<osg::StateSet> renderModelStateSet, 
 		osg::ref_ptr<osg::StateSet> companionWindowStateSet);
+	COSGRenderModel* FindOrLoadRenderModel(const char *pchRenderModelName);
+	std::string GetTrackedDeviceString(vr::IVRSystem *pHmd, vr::TrackedDeviceIndex_t unDevice, vr::TrackedDeviceProperty prop, vr::TrackedPropertyError *peError = NULL);
+	void SetupRenderModelForTrackedDevice(vr::TrackedDeviceIndex_t unTrackedDeviceIndex);
 	void SetupRenderModels();
 	bool BInitEnv();
     OpenVRDevice(float nearClip, float farClip, const float worldUnitsPerMetre = 1.0f, const int samples = 0);
@@ -203,6 +231,8 @@ protected:
     float m_farClip;
     int m_samples;
 private:
+
+
     std::string GetDeviceProperty(vr::TrackedDeviceProperty prop);
     OpenVRDevice(const OpenVRDevice&); // Do not allow copy
     OpenVRDevice& operator=(const OpenVRDevice&); // Do not allow assignment operator.
@@ -234,26 +264,6 @@ private:
     int m_frameIndex;
 };
 
-class COSGRenderModel
-{
-public:
-	COSGRenderModel(const std::string & sRenderModelName);
-	~COSGRenderModel();
 
-	bool BInit(const vr::RenderModel_t & vrModel, const vr::RenderModel_TextureMap_t & vrDiffuseTexture);
-	void Cleanup();
-	void Draw();
-	const std::string & GetName() const { return m_sModelName; }
-
-private:
-	GLuint m_glVertBuffer;
-	GLuint m_glIndexBuffer;
-	GLuint m_glVertArray;
-	GLuint m_glTexture;
-	GLsizei m_unVertexCount;
-	std::string m_sModelName;
-};
-
-static bool g_bPrintf = true;
 
 #endif /* _OSG_OPENVRDEVICE_H_ */
