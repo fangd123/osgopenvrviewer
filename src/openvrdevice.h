@@ -43,7 +43,7 @@ private:
 	osg::ref_ptr<osg::Vec3Array> vertices;
 	osg::ref_ptr<osg::Vec3Array> normals;
 	osg::ref_ptr<osg::Vec2Array> texcoords;
-	osg::ref_ptr<osg::UByteArray> vertIndexes;
+	osg::ref_ptr<osg::UShortArray> vertIndexes;
 	osg::Texture2D* tex2D;
 	GLsizei m_unVertexCount;
 	std::string m_sModelName;
@@ -166,6 +166,7 @@ public:
 		osg::ref_ptr<osg::StateSet> controllerStateSet,
 		osg::ref_ptr<osg::StateSet> renderModelStateSet, 
 		osg::ref_ptr<osg::StateSet> companionWindowStateSet);
+	bool CreateRenderModelShaders(osg::ref_ptr<osg::StateSet> renderModelStateSet);
 	COSGRenderModel* FindOrLoadRenderModel(const char *pchRenderModelName);
 	std::string GetTrackedDeviceString(vr::IVRSystem *pHmd, vr::TrackedDeviceIndex_t unDevice, vr::TrackedDeviceProperty prop, vr::TrackedPropertyError *peError = NULL);
 	void SetupRenderModelForTrackedDevice(vr::TrackedDeviceIndex_t unTrackedDeviceIndex);
@@ -175,6 +176,9 @@ public:
     void createRenderBuffers(osg::ref_ptr<osg::State> state);
     void init();
     void shutdown(osg::GraphicsContext* gc);
+
+	void ProcessVREvent(const vr::VREvent_t& event);
+	void HandleInput();
 
     static bool hmdPresent();
     bool hmdInitialized() const;
@@ -194,6 +198,7 @@ public:
 
     void resetSensorOrientation() const;
     void updatePose();
+	void RenderModelRendering();
 
     osg::Vec3 position() const { return m_position; }
     osg::Quat orientation() const { return m_orientation;  }
