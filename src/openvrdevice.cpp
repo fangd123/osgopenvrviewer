@@ -537,10 +537,15 @@ OpenVRDevice::OpenVRDevice(float nearClip, float farClip, const float worldUnits
     m_worldUnitsPerMetre(worldUnitsPerMetre),
     m_mirrorTexture(nullptr),
     m_position(osg::Vec3(0.0f, 0.0f, 0.0f)),
+	m_leftControllerPosition(osg::Vec3(0.0f, 0.0f, 0.0f)),
+	m_rightControllerPosition(osg::Vec3(0.0f, 0.0f, 0.0f)),
     m_orientation(osg::Quat(0.0f, 0.0f, 0.0f, 1.0f)),
+	m_leftOrientation(osg::Quat(0.0f, 0.0f, 0.0f, 1.0f)),
+	m_rightOrientation(osg::Quat(0.0f, 0.0f, 0.0f, 1.0f)),
     m_nearClip(nearClip), m_farClip(farClip),
     m_samples(samples)
 {
+
     for (int i = 0; i < 2; i++)
     {
         m_textureBuffer[i] = nullptr;
@@ -695,7 +700,7 @@ void OpenVRDevice::updatePose()
 {
     vr::VRCompositor()->SetTrackingSpace(vr::TrackingUniverseSeated);
 
-    vr::TrackedDevicePose_t poses[vr::k_unMaxTrackedDeviceCount];
+
     for (int i = 0; i < vr::k_unMaxTrackedDeviceCount; ++i) poses[i].bPoseIsValid = false;
     vr::VRCompositor()->WaitGetPoses(poses, vr::k_unMaxTrackedDeviceCount, NULL, 0);
 
@@ -714,6 +719,69 @@ void OpenVRDevice::updatePose()
 
 }
 
+void OpenVRDevice::getControllerPose()
+{
+	// don't draw controllers if somebody else has input focus
+	if (m_vrSystem->IsInputFocusCapturedByAnotherProcess())
+		return;
+
+	std::vector<float> vertdataarray;
+
+	m_iTrackedControllerCount = 0;
+
+	for (vr::TrackedDeviceIndex_t unTrackedDevice = vr::k_unTrackedDeviceIndex_Hmd + 1; unTrackedDevice < vr::k_unMaxTrackedDeviceCount; ++unTrackedDevice)
+	{
+		if (!m_vrSystem->IsTrackedDeviceConnected(unTrackedDevice))
+			continue;
+
+		if (m_vrSystem->GetTrackedDeviceClass(unTrackedDevice) != vr::TrackedDeviceClass_Controller)
+			continue;
+
+		// 判断左右手控制器
+		vr::ETrackedControllerRole controllerRole = m_vrSystem->GetControllerRoleForTrackedDeviceIndex(unTrackedDevice);
+
+		if (controllerRole == vr::TrackedControllerRole_LeftHand)
+		{
+			controllerPoses[0] = poses[unTrackedDevice];
+			if (controllerPoses[0].bPoseIsValid)
+			{
+				osg::Matrix matrix = convertMatrix34(controllerPoses[0].mDeviceToAbsoluteTracking);
+				osg::Matrix poseTransform = osg::Matrix::inverse(matrix);
+				m_leftControllerPosition = poseTransform.getTrans() * m_worldUnitsPerMetre;
+				m_leftOrientation = poseTransform.getRotate();
+				// 控制器运动速度
+				vr::HmdVector3_t m_leftVelocity = controllerPoses[1].vVelocity;
+				// 控制器旋转速度
+				vr::HmdVector3_t m_leftAngularVelocity = controllerPoses[1].vAngularVelocity;
+				
+			}
+		}
+		else if (controllerRole == vr::TrackedControllerRole_RightHand)
+		{
+			controllerPoses[1] = poses[unTrackedDevice];
+			if (controllerPoses[1].bPoseIsValid)
+			{
+				osg::Matrix matrix = convertMatrix34(controllerPoses[1].mDeviceToAbsoluteTracking);
+				osg::Matrix poseTransform = osg::Matrix::inverse(matrix);
+				
+				// 控制器位置
+				m_rightControllerPosition = poseTransform.getTrans() * m_worldUnitsPerMetre;
+				// 控制器方向
+				m_rightOrientation = poseTransform.getRotate();
+				// 控制器运动速度
+				vr::HmdVector3_t m_rightVelocity = controllerPoses[1].vVelocity;
+				// 控制器旋转速度
+				vr::HmdVector3_t m_rightAngularVelocity = controllerPoses[1].vAngularVelocity;
+			}
+		}
+		m_iTrackedControllerCount += 1;
+
+		if (!poses[unTrackedDevice].bPoseIsValid)
+			continue;
+
+
+	}
+}
 
 osg::Camera* OpenVRDevice::createRTTCamera(OpenVRDevice::Eye eye, osg::Transform::ReferenceFrame referenceFrame, const osg::Vec4& clearColor, osg::GraphicsContext* gc) const
 {
@@ -857,13 +925,19 @@ void OpenVRDevice::ProcessVREvent(const vr::VREvent_t& event)
 		printf("Device %u updated.\n", event.trackedDeviceIndex);
 	}
 	break;
+	case vr::VREvent_ButtonPress:
+	{
+
 	}
+	break;
+	}
+
 }
 
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-void OpenVRDevice::HandleInput()
+bool OpenVRDevice::HandleInput()
 {
 	// Process SteamVR events
 	vr::VREvent_t event;
@@ -878,9 +952,22 @@ void OpenVRDevice::HandleInput()
 		vr::VRControllerState_t state;
 		if (m_vrSystem->GetControllerState(unDevice, &state, sizeof(state)))
 		{
-			m_rbShowTrackedDevice[unDevice] = state.ulButtonPressed == 0;
+			//trigger 代表的是按钮按下的程度 0L 表示松开 bool 值在判断只有按钮按下后才会触发松开   保证松开不会一直触发
+			uint64_t trigger = state.ulButtonPressed & (1UL << static_cast<int>(vr::EVRButtonId::k_EButton_SteamVR_Trigger));
+
+			bool triggerPressed = false;
+			if (trigger > 0L && !triggerPressed)
+			{
+				triggerPressed = true;
+			}
+			else if (trigger == 0L && triggerPressed)
+			{
+				triggerPressed = false;
+				return true;
+			}
 		}
 	}
+	return false;
 }
 
 /* Protected functions */

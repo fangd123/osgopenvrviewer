@@ -160,8 +160,9 @@ public:
 	COSGRenderModel *m_rTrackedDeviceToRenderModel[vr::k_unMaxTrackedDeviceCount];
 	std::vector< COSGRenderModel * > m_vecRenderModels;
 	bool m_rbShowTrackedDevice[vr::k_unMaxTrackedDeviceCount];
-
-
+	int m_iTrackedControllerCount;
+	vr::TrackedDevicePose_t poses[vr::k_unMaxTrackedDeviceCount];
+	vr::TrackedDevicePose_t controllerPoses[2];
 	bool CreateAllShaders(osg::ref_ptr<osg::StateSet> sceneStateSet, 
 		osg::ref_ptr<osg::StateSet> controllerStateSet,
 		osg::ref_ptr<osg::StateSet> renderModelStateSet, 
@@ -178,7 +179,7 @@ public:
     void shutdown(osg::GraphicsContext* gc);
 
 	void ProcessVREvent(const vr::VREvent_t& event);
-	void HandleInput();
+	bool HandleInput();
 
     static bool hmdPresent();
     bool hmdInitialized() const;
@@ -198,6 +199,7 @@ public:
 
     void resetSensorOrientation() const;
     void updatePose();
+	void getControllerPose();
 	void RenderModelRendering();
 
     osg::Vec3 position() const { return m_position; }
@@ -231,6 +233,11 @@ protected:
 
     osg::Vec3 m_position;
     osg::Quat m_orientation;
+
+	osg::Vec3 m_leftControllerPosition;
+	osg::Vec3 m_rightControllerPosition;
+	osg::Quat m_leftOrientation;
+	osg::Quat m_rightOrientation;
 
     float m_nearClip;
     float m_farClip;

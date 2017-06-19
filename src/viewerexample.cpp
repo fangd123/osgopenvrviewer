@@ -15,14 +15,30 @@
 class GraphicsWindowViewer : public osgViewer::Viewer
 {
 public:
-    GraphicsWindowViewer(osg::ArgumentParser& arguments, osgViewer::GraphicsWindow* graphicsWindow)
-        : osgViewer::Viewer(arguments), _graphicsWindow(graphicsWindow) { }
+    GraphicsWindowViewer(OpenVRDevice openvr,osg::ArgumentParser& arguments, osgViewer::GraphicsWindow* graphicsWindow)
+        : osgViewer::Viewer(arguments), _graphicsWindow(graphicsWindow)
+    {
+		openvrDevice = &openvr;
+    }
 
     virtual void eventTraversal()
     {
         if (_graphicsWindow.valid() && _graphicsWindow->checkEvents())
         {
+
             osgGA::EventQueue::Events events;
+			// 添加VR事件响应，映射成鼠标事件
+			if (openvrDevice->HandleInput())
+			{
+				osg::ref_ptr<osgGA::GUIEventAdapter> controllerEvent = new osgGA::GUIEventAdapter;
+				controllerEvent->setEventType(osgGA::GUIEventAdapter::DRAG);
+				controllerEvent->setX();
+				controllerEvent->setY();
+				controllerEvent->setButtonMask(osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON);
+
+				_graphicsWindow->getEventQueue()->addEvent(controllerEvent);
+			}
+
             _graphicsWindow->getEventQueue()->copyEvents(events);
             osgGA::EventQueue::Events::iterator itr;
             for (itr = events.begin(); itr != events.end(); ++itr)
@@ -53,6 +69,7 @@ public:
     }
 private:
     osg::ref_ptr<osgViewer::GraphicsWindow> _graphicsWindow;
+	osg::ref_ptr<OpenVRDevice> openvrDevice;
 };
 
 int main( int argc, char** argv )
@@ -126,7 +143,7 @@ int main( int argc, char** argv )
         gc->setClearMask(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
 
-    GraphicsWindowViewer viewer(arguments, dynamic_cast<osgViewer::GraphicsWindow*>(gc.get()));
+    GraphicsWindowViewer viewer(openvrDevice,arguments, dynamic_cast<osgViewer::GraphicsWindow*>(gc.get()));
 
     // Force single threaded to make sure that no other thread can use the GL context
     viewer.setThreadingModel(osgViewer::Viewer::SingleThreaded);
