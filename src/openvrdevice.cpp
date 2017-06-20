@@ -1,4 +1,4 @@
-﻿/*
+/*
  * openvrdevice.cpp
  *
  *  Created on: Dec 18, 2015
@@ -959,15 +959,17 @@ bool OpenVRDevice::HandleInput()
 			if (trigger > 0L && !triggerPressed)
 			{
 				triggerPressed = true;
+                
 			}
 			else if (trigger == 0L && triggerPressed)
 			{
 				triggerPressed = false;
-				return true;
 			}
+            // 若按下trigger，则获取controller当前位置等信息
+            getControllerPose();
 		}
 	}
-	return false;
+	return triggerPressed;
 }
 
 /* Protected functions */
