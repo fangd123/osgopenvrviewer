@@ -28,29 +28,31 @@ public:
 
             osgGA::EventQueue::Events events;
 			// 添加VR事件响应，映射成鼠标事件
-            // 判断当前控制器为左手还是右手
-            // 按下trigger时，判断控制器是否两个都按下了
-            // 若按下一个，则进行旋转操作
-            // 若按下两个，则进行缩放操作
+            // 按下trigger时，进行旋转
+			// 按下trackpad时，进行缩放
+			// TODO 按下trigger并触摸trackpad时，进行平移
 			if (openvrDevice->HandleInput() == 1)
 			{
+				// 目前只考虑右手
                 // 对应鼠标拖拽操作
 				osg::ref_ptr<osgGA::GUIEventAdapter> controllerEvent = new osgGA::GUIEventAdapter;
 				controllerEvent->setEventType(osgGA::GUIEventAdapter::DRAG);
                 // 按照OSG坐标系统，映射到平面上的就是X和z坐标
-				controllerEvent->setX(opengvrDevice.m_leftControllerPosition.x);
-				controllerEvent->setY(opengvrDevice.m_leftControllerPosition.z);
+				controllerEvent->setX(openvrDevice->m_rightControllerPosition.x);
+				controllerEvent->setY(openvrDevice->m_rightControllerPosition.z);
 				controllerEvent->setButtonMask(osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON);
-
 				_graphicsWindow->getEventQueue()->addEvent(controllerEvent);
 			} else if (openvrDevice->HandleInput() == 2)
             {
                 // 对应鼠标滚轮操作
                 osg::ref_ptr<osgGA::GUIEventAdapter> controllerEvent = new osgGA::GUIEventAdapter;
 				controllerEvent->setEventType(osgGA::GUIEventAdapter::SCROLL);
-                osgGA::GUIEventAdapter::ScrollingMotion::SCROLL_UP;
-                osgGA::GUIEventAdapter::ScrollingMotion::SCROLL_DOWN;
-                // 按照OSG坐标系统，映射到平面上的就是X和z坐标
+				controllerEvent->setEventType(osgGA::GUIEventAdapter::DRAG);
+				// 按照OSG坐标系统，映射到平面上的就是X和z坐标
+				controllerEvent->setX(openvrDevice->m_rightControllerPosition.x);
+				controllerEvent->setY(openvrDevice->m_rightControllerPosition.z);
+				controllerEvent->setButtonMask(osgGA::GUIEventAdapter::RIGHT_MOUSE_BUTTON);
+				_graphicsWindow->getEventQueue()->addEvent(controllerEvent);
 
             }
 

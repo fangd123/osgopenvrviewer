@@ -179,7 +179,7 @@ public:
     void shutdown(osg::GraphicsContext* gc);
 
 	void ProcessVREvent(const vr::VREvent_t& event);
-	bool HandleInput();
+	uint32_t HandleInput();
 
     static bool hmdPresent();
     bool hmdInitialized() const;
@@ -211,6 +211,11 @@ public:
     void blitMirrorTexture(osg::GraphicsContext* gc);
 
     osg::GraphicsContext::Traits* graphicsContextTraits() const;
+
+	osg::Vec3 m_leftControllerPosition;
+	osg::Vec3 m_rightControllerPosition;
+	osg::Quat m_leftOrientation;
+	osg::Quat m_rightOrientation;
 protected:
     ~OpenVRDevice(); // Since we inherit from osg::Referenced we must make destructor protected
 
@@ -233,11 +238,6 @@ protected:
 
     osg::Vec3 m_position;
     osg::Quat m_orientation;
-
-	osg::Vec3 m_leftControllerPosition;
-	osg::Vec3 m_rightControllerPosition;
-	osg::Quat m_leftOrientation;
-	osg::Quat m_rightOrientation;
 
     float m_nearClip;
     float m_farClip;

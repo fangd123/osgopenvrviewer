@@ -947,18 +947,31 @@ uint32_t OpenVRDevice::HandleInput()
 	}
 
 	// Process SteamVR controller state
-    unControllerActivatedCount = 0;  // 被按按钮的控制器个数
+    uint32_t result = 0;  // 控制器按钮的结果
 	for (vr::TrackedDeviceIndex_t unDevice = 0; unDevice < vr::k_unMaxTrackedDeviceCount; unDevice++)
 	{
 		vr::VRControllerState_t state;
         // 在这里可以直接使用withpose来获取controller的姿态信息,删去getControllerPose函数
-		if (m_vrSystem->GetControllerStateWithPose(unDevice, &state, sizeof(state)))
+		if (m_vrSystem->GetControllerState(unDevice, &state, sizeof(state)))
 		{
 			//trigger 代表的是按钮按下的程度 0L 表示松开 bool 值在判断只有按钮按下后才会触发松开   保证松开不会一直触发
             // 这句话还是有点问题
 			uint64_t trigger = state.ulButtonPressed & (1UL << static_cast<int>(vr::EVRButtonId::k_EButton_SteamVR_Trigger));
+			uint64_t trackPad = state.ulButtonPressed & (1UL << static_cast<int>(vr::EVRButtonId::k_EButton_SteamVR_Touchpad));
 
-			bool triggerPressed = false;
+			// 若按下trigger，则获取controller当前位置等信息
+			if (trigger >0L)
+			{
+				getControllerPose();
+				return 1;
+			}
+			else if (trackPad > 0L)
+			{
+				getControllerPose();
+				return 2;
+			}
+			return 0;
+			/*bool triggerPressed = false;
 			if (trigger > 0L && !triggerPressed)
 			{
 				triggerPressed = true;
@@ -968,12 +981,21 @@ uint32_t OpenVRDevice::HandleInput()
 			{
 				triggerPressed = false;
 			}
-            // 若按下trigger，则获取controller当前位置等信息
-            //getControllerPose();
-            unControllerActivatedCount++;
+			
+			bool trackPadPressed = false;
+			if (trackPad > 0L && !trackPadPressed)
+			{
+				trackPadPressed = true;
+
+			}
+			else if (trackPad == 0L && trackPadPressed)
+			{
+				trackPadPressed = false;
+			}*/
+
 		}
 	}
-	return unControllerActivatedCount;
+	return result;
 }
 
 /* Protected functions */
@@ -1078,6 +1100,5 @@ COSGRenderModel::~COSGRenderModel()
 {
 	Cleanup();
 }
-
 
 
