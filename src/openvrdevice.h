@@ -28,26 +28,6 @@
     typedef osg::Texture::Extensions OSG_Texture_Extensions;
 #endif
 
-class COSGRenderModel
-{
-public:
-	COSGRenderModel(const std::string & sRenderModelName);
-	~COSGRenderModel();
-
-	bool BInit(const vr::RenderModel_t & vrModel, const vr::RenderModel_TextureMap_t & vrDiffuseTexture);
-	void Cleanup();
-	void Draw();
-	const std::string & GetName() const { return m_sModelName; }
-
-private:
-	osg::ref_ptr<osg::Vec3Array> vertices;
-	osg::ref_ptr<osg::Vec3Array> normals;
-	osg::ref_ptr<osg::Vec2Array> texcoords;
-	osg::ref_ptr<osg::UShortArray> vertIndexes;
-	osg::Texture2D* tex2D;
-	GLsizei m_unVertexCount;
-	std::string m_sModelName;
-};
 
 static bool g_bPrintf = true;
 
@@ -157,29 +137,17 @@ public:
 	osg::ref_ptr<osg::Node> controllerNode;
 	osg::ref_ptr<osg::Node> renderModelNode;
 	osg::ref_ptr<osg::Node> companionWindowNode;
-	COSGRenderModel *m_rTrackedDeviceToRenderModel[vr::k_unMaxTrackedDeviceCount];
-	std::vector< COSGRenderModel * > m_vecRenderModels;
 	bool m_rbShowTrackedDevice[vr::k_unMaxTrackedDeviceCount];
 	int m_iTrackedControllerCount;
 	vr::TrackedDevicePose_t poses[vr::k_unMaxTrackedDeviceCount];
 	vr::TrackedDevicePose_t controllerPoses[2];
-	bool CreateAllShaders(osg::ref_ptr<osg::StateSet> sceneStateSet, 
-		osg::ref_ptr<osg::StateSet> controllerStateSet,
-		osg::ref_ptr<osg::StateSet> renderModelStateSet, 
-		osg::ref_ptr<osg::StateSet> companionWindowStateSet);
-	bool CreateRenderModelShaders(osg::ref_ptr<osg::StateSet> renderModelStateSet);
-	COSGRenderModel* FindOrLoadRenderModel(const char *pchRenderModelName);
-	std::string GetTrackedDeviceString(vr::IVRSystem *pHmd, vr::TrackedDeviceIndex_t unDevice, vr::TrackedDeviceProperty prop, vr::TrackedPropertyError *peError = NULL);
-	void SetupRenderModelForTrackedDevice(vr::TrackedDeviceIndex_t unTrackedDeviceIndex);
-	void SetupRenderModels();
-	bool BInitEnv();
     OpenVRDevice(float nearClip, float farClip, const float worldUnitsPerMetre = 1.0f, const int samples = 0);
     void createRenderBuffers(osg::ref_ptr<osg::State> state);
     void init();
     void shutdown(osg::GraphicsContext* gc);
 
 	void ProcessVREvent(const vr::VREvent_t& event);
-	uint32_t HandleInput();
+	void HandleInput();
 
     static bool hmdPresent();
     bool hmdInitialized() const;
@@ -200,7 +168,6 @@ public:
     void resetSensorOrientation() const;
     void updatePose();
 	void getControllerPose();
-	void RenderModelRendering();
 
     osg::Vec3 position() const { return m_position; }
     osg::Quat orientation() const { return m_orientation;  }
@@ -212,6 +179,7 @@ public:
 
     osg::GraphicsContext::Traits* graphicsContextTraits() const;
 
+	uint32_t controllerEventResult = 0;  // 控制器按钮的结果
 	osg::Vec3 m_leftControllerPosition;
 	osg::Vec3 m_rightControllerPosition;
 	osg::Quat m_leftOrientation;

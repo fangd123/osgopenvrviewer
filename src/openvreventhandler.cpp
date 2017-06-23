@@ -21,6 +21,10 @@ bool OpenVREventHandler::handle(const osgGA::GUIEventAdapter& ea,osgGA::GUIActio
                     break;
             }
         }
+		case osgGA::GUIEventAdapter::DRAG:
+		{
+			printf("mouse position:%d ,%d\n", ea.getX(),ea.getY());
+		}
     }
 
     return osgGA::GUIEventHandler::handle(ea, ad);

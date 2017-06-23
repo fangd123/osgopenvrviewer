@@ -242,293 +242,6 @@ void OpenVRMirrorTexture::destroy(osg::GraphicsContext* gc)
     }
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: Creates all the shaders used by VR
-//-----------------------------------------------------------------------------
-bool OpenVRDevice::CreateAllShaders(osg::ref_ptr<osg::StateSet> sceneStateSet, 
-	osg::ref_ptr<osg::StateSet> controllerStateSet, 
-	osg::ref_ptr<osg::StateSet> renderModelStateSet, 
-	osg::ref_ptr<osg::StateSet> companionWindowStateSet)
-{
-	char * sceneVertexShader = {
-		// Vertex Shader
-		"#version 410\n"
-		"uniform mat4 matrix;\n"
-		"layout(location = 0) in vec4 position;\n"
-		"layout(location = 1) in vec2 v2UVcoordsIn;\n"
-		"layout(location = 2) in vec3 v3NormalIn;\n"
-		"out vec2 v2UVcoords;\n"
-		"void main()\n"
-		"{\n"
-		"	v2UVcoords = v2UVcoordsIn;\n"
-		"	gl_Position = matrix * position;\n"
-		"}\n"
-	};
-	char * sceneFragShader = {
-		// Fragment Shader
-		"#version 410 core\n"
-		"uniform sampler2D mytexture;\n"
-		"in vec2 v2UVcoords;\n"
-		"out vec4 outputColor;\n"
-		"void main()\n"
-		"{\n"
-		"   outputColor = texture(mytexture, v2UVcoords);\n"
-		"}\n"
-	};
-
-	char * controllerVertexShader = {
-		// vertex shader
-		"#version 410\n"
-		"uniform mat4 matrix;\n"
-		"layout(location = 0) in vec4 position;\n"
-		"layout(location = 1) in vec3 v3ColorIn;\n"
-		"out vec4 v4Color;\n"
-		"void main()\n"
-		"{\n"
-		"	v4Color.xyz = v3ColorIn; v4Color.a = 1.0;\n"
-		"	gl_Position = matrix * position;\n"
-		"}\n"
-	};
-	char * controllerFragShader = {
-		// fragment shader
-		"#version 410\n"
-		"in vec4 v4Color;\n"
-		"out vec4 outputColor;\n"
-		"void main()\n"
-		"{\n"
-		"   outputColor = v4Color;\n"
-		"}\n"
-	};
-
-	char * renderModelVertexShader = {
-
-		// vertex shader
-		"#version 410\n"
-		"uniform mat4 matrix;\n"
-		"layout(location = 0) in vec4 position;\n"
-		"layout(location = 1) in vec3 v3NormalIn;\n"
-		"layout(location = 2) in vec2 v2TexCoordsIn;\n"
-		"out vec2 v2TexCoord;\n"
-		"void main()\n"
-		"{\n"
-		"	v2TexCoord = v2TexCoordsIn;\n"
-		"	gl_Position = matrix * vec4(position.xyz, 1);\n"
-		"}\n"
-	};
-
-	char * renderModelFragShader = {
-
-		//fragment shader
-		"#version 410 core\n"
-		"uniform sampler2D diffuse;\n"
-		"in vec2 v2TexCoord;\n"
-		"out vec4 outputColor;\n"
-		"void main()\n"
-		"{\n"
-		"   outputColor = texture( diffuse, v2TexCoord);\n"
-		"}\n"
-
-	};
-
-	char * companionWindowVertexShader = {
-
-		// vertex shader
-		"#version 410 core\n"
-		"layout(location = 0) in vec4 position;\n"
-		"layout(location = 1) in vec2 v2UVIn;\n"
-		"noperspective out vec2 v2UV;\n"
-		"void main()\n"
-		"{\n"
-		"	v2UV = v2UVIn;\n"
-		"	gl_Position = position;\n"
-		"}\n"
-	};
-
-	char * companionWindowFragShader = {
-		// fragment shader
-		"#version 410 core\n"
-		"uniform sampler2D mytexture;\n"
-		"noperspective in vec2 v2UV;\n"
-		"out vec4 outputColor;\n"
-		"void main()\n"
-		"{\n"
-		"		outputColor = texture(mytexture, v2UV);\n"
-		"}\n"
-	};
-
-	//TODO 创建一个program数组
-
-	osg::ref_ptr<osg::Program> sceneProgram = new osg::Program;
-	if (!sceneProgram->addShader(new osg::Shader(osg::Shader::FRAGMENT, sceneFragShader))
-		|| !sceneProgram->addShader(new osg::Shader(osg::Shader::VERTEX, sceneVertexShader)))
-	{
-		printf("无法创建场景着色器");
-		return false;
-	}
-
-	sceneStateSet->setAttributeAndModes(sceneProgram.get());
-
-	osg::ref_ptr<osg::Program> controllerProgram = new osg::Program;
-
-	if (!controllerProgram->addShader(new osg::Shader(osg::Shader::FRAGMENT, controllerFragShader))
-		|| !controllerProgram->addShader(new osg::Shader(osg::Shader::VERTEX, controllerVertexShader)))
-	{
-		printf("无法创建控制器着色器");
-		return false;
-	}
-
-	controllerStateSet->setAttributeAndModes(controllerProgram.get());
-
-	osg::ref_ptr<osg::Program> renderModelProgram = new osg::Program;
-	if (!renderModelProgram->addShader(new osg::Shader(osg::Shader::FRAGMENT, renderModelFragShader))
-		|| !renderModelProgram->addShader(new osg::Shader(osg::Shader::VERTEX, renderModelVertexShader)))
-	{
-		printf("无法创建渲染模型着色器");
-		return false;
-	}
-
-	renderModelStateSet->setAttributeAndModes(renderModelProgram.get());
-
-	osg::ref_ptr<osg::Program> companionWindowProgram = new osg::Program;
-	if (!companionWindowProgram->addShader(new osg::Shader(osg::Shader::FRAGMENT, companionWindowFragShader))
-		|| !companionWindowProgram->addShader(new osg::Shader(osg::Shader::VERTEX, companionWindowVertexShader)))
-	{
-		printf("无法创建companionWindow着色器");
-		return false;
-	}
-	renderModelStateSet->setAttributeAndModes(companionWindowProgram.get());
-	
-	return true;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Creates all the shaders used by VR
-//-----------------------------------------------------------------------------
-bool OpenVRDevice::CreateRenderModelShaders(osg::ref_ptr<osg::StateSet> renderModelStateSet)
-{
-	char * renderModelVertexShader = {
-
-		// vertex shader
-		"#version 410\n"
-		"uniform mat4 matrix;\n"
-		"layout(location = 0) in vec4 position;\n"
-		"layout(location = 1) in vec3 v3NormalIn;\n"
-		"layout(location = 2) in vec2 v2TexCoordsIn;\n"
-		"out vec2 v2TexCoord;\n"
-		"void main()\n"
-		"{\n"
-		"	v2TexCoord = v2TexCoordsIn;\n"
-		"	gl_Position = matrix * vec4(position.xyz, 1);\n"
-		"}\n"
-	};
-
-	char * renderModelFragShader = {
-		//fragment shader
-		"#version 410 core\n"
-		"uniform sampler2D diffuse;\n"
-		"in vec2 v2TexCoord;\n"
-		"out vec4 outputColor;\n"
-		"void main()\n"
-		"{\n"
-		"   outputColor = texture( diffuse, v2TexCoord);\n"
-		"}\n"
-
-	};
-
-	osg::ref_ptr<osg::Program> renderModelProgram = new osg::Program;
-	if (!renderModelProgram->addShader(new osg::Shader(osg::Shader::FRAGMENT, renderModelFragShader))
-		|| !renderModelProgram->addShader(new osg::Shader(osg::Shader::VERTEX, renderModelVertexShader)))
-	{
-		printf("无法创建渲染模型着色器");
-		return false;
-	}
-
-	renderModelStateSet->setAttributeAndModes(renderModelProgram.get());
-
-	return true;
-}
-
-
-//-----------------------------------------------------------------------------
-// Purpose: Helper to get a string from a tracked device property and turn it
-//			into a std::string
-//-----------------------------------------------------------------------------
-std::string OpenVRDevice::GetTrackedDeviceString(vr::IVRSystem* pHmd, vr::TrackedDeviceIndex_t unDevice, vr::TrackedDeviceProperty prop, vr::TrackedPropertyError* peError)
-{
-	uint32_t unRequiredBufferLen = pHmd->GetStringTrackedDeviceProperty(unDevice, prop, NULL, 0, peError);
-	if (unRequiredBufferLen == 0)
-		return "";
-
-	char *pchBuffer = new char[unRequiredBufferLen];
-	unRequiredBufferLen = pHmd->GetStringTrackedDeviceProperty(unDevice, prop, pchBuffer, unRequiredBufferLen, peError);
-	std::string sResult = pchBuffer;
-	delete[] pchBuffer;
-	return sResult;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Create/destroy GL a Render Model for a single tracked device
-//-----------------------------------------------------------------------------
-void OpenVRDevice::SetupRenderModelForTrackedDevice(vr::TrackedDeviceIndex_t unTrackedDeviceIndex)
-{
-	if (unTrackedDeviceIndex >= vr::k_unMaxTrackedDeviceCount)
-		return;
-
-	// try to find a model we've already set up
-	std::string sRenderModelName = GetDeviceProperty(vr::Prop_RenderModelName_String);
-	COSGRenderModel *pRenderModel = FindOrLoadRenderModel(sRenderModelName.c_str());
-	if (!pRenderModel)
-	{
-		std::string sTrackingSystemName = GetTrackedDeviceString(m_vrSystem, unTrackedDeviceIndex, vr::Prop_TrackingSystemName_String);
-		printf("Unable to load render model for tracked device %d (%s.%s)", unTrackedDeviceIndex, sTrackingSystemName.c_str(), sRenderModelName.c_str());
-	}
-	else
-	{
-		m_rTrackedDeviceToRenderModel[unTrackedDeviceIndex] = pRenderModel;
-		m_rbShowTrackedDevice[unTrackedDeviceIndex] = true;
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Create/destroy GL Render Models
-//-----------------------------------------------------------------------------
-void OpenVRDevice::SetupRenderModels()
-{
-	memset(m_rTrackedDeviceToRenderModel, 0, sizeof(m_rTrackedDeviceToRenderModel));
-
-	if (!m_vrSystem)
-		return;
-
-	for (uint32_t unTrackedDevice = vr::k_unTrackedDeviceIndex_Hmd + 1; unTrackedDevice < vr::k_unMaxTrackedDeviceCount; unTrackedDevice++)
-	{
-		if (!m_vrSystem->IsTrackedDeviceConnected(unTrackedDevice))
-			continue;
-
-		SetupRenderModelForTrackedDevice(unTrackedDevice);
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Initialize VR Env. Returns true if VR Env has been successfully
-//          initialized, false if shaders could not be created.
-//          If failure occurred in a module other than shaders, the function
-//          may return true or throw an error. 
-//-----------------------------------------------------------------------------
-bool OpenVRDevice::BInitEnv()
-{
-	osg::ref_ptr<osg::StateSet> sceneStateSet = sceneNode->getOrCreateStateSet();
-	osg::ref_ptr<osg::StateSet> controllerStateSet = controllerNode->getOrCreateStateSet();
-	osg::ref_ptr<osg::StateSet> renderModelStateSet = renderModelNode->getOrCreateStateSet();
-	osg::ref_ptr<osg::StateSet> companionWindowStateSet = companionWindowNode->getOrCreateStateSet();
-
-	if( !CreateAllShaders(sceneStateSet,controllerStateSet, 
-		renderModelStateSet,companionWindowStateSet) )
-		return false;
-	//SetupCompanionWindow();
-	SetupRenderModels();
-
-	return true;
-}
 
 
 OpenVRDevice::OpenVRDevice(float nearClip, float farClip, const float worldUnitsPerMetre, const int samples) :
@@ -591,10 +304,6 @@ OpenVRDevice::OpenVRDevice(float nearClip, float farClip, const float worldUnits
     osg::notify(osg::NOTICE) << "HMD driver name: "<< driverName << std::endl;
     osg::notify(osg::NOTICE) << "HMD device serial number: " << deviceSerialNumber << std::endl;
 
-	if (!BInitEnv())
-	{
-		printf("%s - 环境初始化失败!\n", __FUNCTION__);
-	}
 }
 
 std::string OpenVRDevice::GetDeviceProperty(vr::TrackedDeviceProperty prop)
@@ -715,19 +424,13 @@ void OpenVRDevice::updatePose()
         osg::Matrix poseTransform = osg::Matrix::inverse(matrix);
         m_position = poseTransform.getTrans() * m_worldUnitsPerMetre;
         m_orientation = poseTransform.getRotate();
+		getControllerPose();
     }
 
 }
 
 void OpenVRDevice::getControllerPose()
 {
-	// don't draw controllers if somebody else has input focus
-	if (m_vrSystem->IsInputFocusCapturedByAnotherProcess())
-		return;
-
-	std::vector<float> vertdataarray;
-
-	m_iTrackedControllerCount = 0;
 
 	for (vr::TrackedDeviceIndex_t unTrackedDevice = vr::k_unTrackedDeviceIndex_Hmd + 1; unTrackedDevice < vr::k_unMaxTrackedDeviceCount; ++unTrackedDevice)
 	{
@@ -772,6 +475,7 @@ void OpenVRDevice::getControllerPose()
 				vr::HmdVector3_t m_rightVelocity = controllerPoses[1].vVelocity;
 				// 控制器旋转速度
 				vr::HmdVector3_t m_rightAngularVelocity = controllerPoses[1].vAngularVelocity;
+
 			}
 		}
 		m_iTrackedControllerCount += 1;
@@ -911,7 +615,6 @@ void OpenVRDevice::ProcessVREvent(const vr::VREvent_t& event)
 	{
 	case vr::VREvent_TrackedDeviceActivated:
 	{
-		SetupRenderModelForTrackedDevice(event.trackedDeviceIndex);
 		printf("Device %u attached. Setting up render model.\n", event.trackedDeviceIndex);
 	}
 	break;
@@ -927,17 +630,45 @@ void OpenVRDevice::ProcessVREvent(const vr::VREvent_t& event)
 	break;
 	case vr::VREvent_ButtonPress:
 	{
+		if (event.data.controller.button == vr::EVRButtonId::k_EButton_SteamVR_Trigger)
+		{
+			// 判断左右手控制器
+			vr::ETrackedControllerRole controllerRole = m_vrSystem->GetControllerRoleForTrackedDeviceIndex(event.trackedDeviceIndex);
 
+			// 主要用右手
+			if (controllerRole == vr::TrackedControllerRole_RightHand)
+			{
+				//getControllerPose();
+				printf("TrackedControllerRole_RightHand triggerpress.\n", event.trackedDeviceIndex);
+				controllerEventResult = 1;
+			}
+
+		}
+	}
+	break;
+	case vr::VREvent_ButtonUnpress:
+	{
+		// 判断左右手控制器
+		vr::ETrackedControllerRole controllerRole = m_vrSystem->GetControllerRoleForTrackedDeviceIndex(event.trackedDeviceIndex);
+
+		// 主要用右手
+		if (controllerRole == vr::TrackedControllerRole_RightHand)
+		{
+			//getControllerPose();
+			printf("TrackedControllerRole_RightHand triggerun.\n", event.trackedDeviceIndex);
+			controllerEventResult = 0;
+		}
 	}
 	break;
 	}
+
 
 }
 
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-uint32_t OpenVRDevice::HandleInput()
+void OpenVRDevice::HandleInput()
 {
 	// Process SteamVR events
 	vr::VREvent_t event;
@@ -945,57 +676,6 @@ uint32_t OpenVRDevice::HandleInput()
 	{
 		ProcessVREvent(event);
 	}
-
-	// Process SteamVR controller state
-    uint32_t result = 0;  // 控制器按钮的结果
-	for (vr::TrackedDeviceIndex_t unDevice = 0; unDevice < vr::k_unMaxTrackedDeviceCount; unDevice++)
-	{
-		vr::VRControllerState_t state;
-        // 在这里可以直接使用withpose来获取controller的姿态信息,删去getControllerPose函数
-		if (m_vrSystem->GetControllerState(unDevice, &state, sizeof(state)))
-		{
-			//trigger 代表的是按钮按下的程度 0L 表示松开 bool 值在判断只有按钮按下后才会触发松开   保证松开不会一直触发
-            // 这句话还是有点问题
-			uint64_t trigger = state.ulButtonPressed & (1UL << static_cast<int>(vr::EVRButtonId::k_EButton_SteamVR_Trigger));
-			uint64_t trackPad = state.ulButtonPressed & (1UL << static_cast<int>(vr::EVRButtonId::k_EButton_SteamVR_Touchpad));
-
-			// 若按下trigger，则获取controller当前位置等信息
-			if (trigger >0L)
-			{
-				getControllerPose();
-				return 1;
-			}
-			else if (trackPad > 0L)
-			{
-				getControllerPose();
-				return 2;
-			}
-			return 0;
-			/*bool triggerPressed = false;
-			if (trigger > 0L && !triggerPressed)
-			{
-				triggerPressed = true;
-                
-			}
-			else if (trigger == 0L && triggerPressed)
-			{
-				triggerPressed = false;
-			}
-			
-			bool trackPadPressed = false;
-			if (trackPad > 0L && !trackPadPressed)
-			{
-				trackPadPressed = true;
-
-			}
-			else if (trackPad == 0L && trackPadPressed)
-			{
-				trackPadPressed = false;
-			}*/
-
-		}
-	}
-	return result;
 }
 
 /* Protected functions */
@@ -1068,6 +748,7 @@ void OpenVRRealizeOperation::operator() (osg::GraphicsContext* gc)
 
 void OpenVRSwapCallback::swapBuffersImplementation(osg::GraphicsContext* gc)
 {
+
     // Submit rendered frame to compositor
     m_device->submitFrame();
 
@@ -1079,26 +760,9 @@ void OpenVRSwapCallback::swapBuffersImplementation(osg::GraphicsContext* gc)
 
     // Update poses from HMD
     m_device->updatePose();
+
+	m_device->HandleInput();
 }
 
-
-//-----------------------------------------------------------------------------
-// Purpose: Create/destroy GL Render Models
-//-----------------------------------------------------------------------------
-COSGRenderModel::COSGRenderModel(const std::string & sRenderModelName)
-	: m_sModelName(sRenderModelName)
-{
-	vertices = new osg::Vec3Array;
-	normals = new osg::Vec3Array;
-	texcoords = new osg::Vec2Array;
-	vertIndexes = new osg::UShortArray;
-	tex2D = new osg::Texture2D;
-}
-
-
-COSGRenderModel::~COSGRenderModel()
-{
-	Cleanup();
-}
 
 

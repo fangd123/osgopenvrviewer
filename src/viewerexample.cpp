@@ -15,47 +15,47 @@
 class GraphicsWindowViewer : public osgViewer::Viewer
 {
 public:
-    GraphicsWindowViewer(OpenVRDevice openvr,osg::ArgumentParser& arguments, osgViewer::GraphicsWindow* graphicsWindow)
+    GraphicsWindowViewer(osg::ref_ptr<OpenVRDevice> openvr,osg::ArgumentParser& arguments, osgViewer::GraphicsWindow* graphicsWindow)
         : osgViewer::Viewer(arguments), _graphicsWindow(graphicsWindow)
     {
-		openvrDevice = &openvr;
+		openvrDevice = openvr;
     }
 
     virtual void eventTraversal()
     {
+		//printf("%u\n", openvrDevice->controllerEventResult);
+		// 添加VR事件响应，映射成鼠标事件
+		// 按下trigger时，进行旋转
+		// 按下trackpad时，进行缩放
+		// TODO 按下trigger并触摸trackpad时，进行平移
+		if (openvrDevice->controllerEventResult == 1)
+		{
+			// 目前只考虑右手
+			// 对应鼠标拖拽操作
+			osg::ref_ptr<osgGA::GUIEventAdapter> controllerEvent = new osgGA::GUIEventAdapter;
+			controllerEvent->setEventType(osgGA::GUIEventAdapter::DRAG);
+			// 按照OSG坐标系统，映射到平面上的就是X和z坐标
+
+			osg::ref_ptr<osg::Camera> camera = this->getCamera();
+
+			osg::Matrix VPW = camera->getViewMatrix() *
+				camera->getProjectionMatrix() *
+				camera->getViewport()->computeWindowMatrix();
+
+			osg::Vec3 screenPosition = openvrDevice->m_rightControllerPosition;
+
+			//std::cout << screenPosition.x() << "," << screenPosition.y() << "," << screenPosition.z() << ';' << std::endl;
+			controllerEvent->setX(screenPosition.x());
+			controllerEvent->setY(screenPosition.y());
+
+			controllerEvent->setButtonMask(osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON);
+			_graphicsWindow->getEventQueue()->addEvent(controllerEvent);
+		}
+
         if (_graphicsWindow.valid() && _graphicsWindow->checkEvents())
         {
 
             osgGA::EventQueue::Events events;
-			// 添加VR事件响应，映射成鼠标事件
-            // 按下trigger时，进行旋转
-			// 按下trackpad时，进行缩放
-			// TODO 按下trigger并触摸trackpad时，进行平移
-			if (openvrDevice->HandleInput() == 1)
-			{
-				// 目前只考虑右手
-                // 对应鼠标拖拽操作
-				osg::ref_ptr<osgGA::GUIEventAdapter> controllerEvent = new osgGA::GUIEventAdapter;
-				controllerEvent->setEventType(osgGA::GUIEventAdapter::DRAG);
-                // 按照OSG坐标系统，映射到平面上的就是X和z坐标
-				controllerEvent->setX(openvrDevice->m_rightControllerPosition.x);
-				controllerEvent->setY(openvrDevice->m_rightControllerPosition.z);
-				controllerEvent->setButtonMask(osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON);
-				_graphicsWindow->getEventQueue()->addEvent(controllerEvent);
-			} else if (openvrDevice->HandleInput() == 2)
-            {
-                // 对应鼠标滚轮操作
-                osg::ref_ptr<osgGA::GUIEventAdapter> controllerEvent = new osgGA::GUIEventAdapter;
-				controllerEvent->setEventType(osgGA::GUIEventAdapter::SCROLL);
-				controllerEvent->setEventType(osgGA::GUIEventAdapter::DRAG);
-				// 按照OSG坐标系统，映射到平面上的就是X和z坐标
-				controllerEvent->setX(openvrDevice->m_rightControllerPosition.x);
-				controllerEvent->setY(openvrDevice->m_rightControllerPosition.z);
-				controllerEvent->setButtonMask(osgGA::GUIEventAdapter::RIGHT_MOUSE_BUTTON);
-				_graphicsWindow->getEventQueue()->addEvent(controllerEvent);
-
-            }
-
             _graphicsWindow->getEventQueue()->copyEvents(events);
             osgGA::EventQueue::Events::iterator itr;
             for (itr = events.begin(); itr != events.end(); ++itr)
@@ -170,12 +170,13 @@ int main( int argc, char** argv )
     // Disable automatic computation of near and far plane
     viewer.getCamera()->setComputeNearFarMode(osg::CullSettings::DO_NOT_COMPUTE_NEAR_FAR);
     viewer.setCameraManipulator(cameraManipulator);
-
+	osg::ref_ptr<osg::ApplicationUsage> usage = new osg::ApplicationUsage;
     // Things to do when viewer is realized
     osg::ref_ptr<OpenVRRealizeOperation> openvrRealizeOperation = new OpenVRRealizeOperation(openvrDevice);
     viewer.setRealizeOperation(openvrRealizeOperation.get());
 
     osg::ref_ptr<OpenVRViewer> openvrViewer = new OpenVRViewer(&viewer, openvrDevice, openvrRealizeOperation);
+
     openvrViewer->addChild(loadedModel);
     viewer.setSceneData(openvrViewer);
     // Add statistics handler
