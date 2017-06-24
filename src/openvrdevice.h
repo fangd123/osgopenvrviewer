@@ -140,7 +140,6 @@ public:
 	bool m_rbShowTrackedDevice[vr::k_unMaxTrackedDeviceCount];
 	int m_iTrackedControllerCount;
 	vr::TrackedDevicePose_t poses[vr::k_unMaxTrackedDeviceCount];
-	vr::TrackedDevicePose_t controllerPoses[2];
     OpenVRDevice(float nearClip, float farClip, const float worldUnitsPerMetre = 1.0f, const int samples = 0);
     void createRenderBuffers(osg::ref_ptr<osg::State> state);
     void init();

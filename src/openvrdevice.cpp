@@ -7,7 +7,7 @@
  */
 
 #include "openvrdevice.h"
-
+#include <iostream>
 #ifdef _WIN32
     #include <Windows.h>
 #endif
@@ -425,7 +425,9 @@ void OpenVRDevice::updatePose()
         m_position = poseTransform.getTrans() * m_worldUnitsPerMetre;
         m_orientation = poseTransform.getRotate();
 		getControllerPose();
+		//std::cout << m_position.x() << "," << m_position.y() << "," << m_position.z() << "," << std::endl;
     }
+
 
 }
 
@@ -442,39 +444,19 @@ void OpenVRDevice::getControllerPose()
 
 		// 判断左右手控制器
 		vr::ETrackedControllerRole controllerRole = m_vrSystem->GetControllerRoleForTrackedDeviceIndex(unTrackedDevice);
-
-		if (controllerRole == vr::TrackedControllerRole_LeftHand)
+		
+		if (controllerRole == vr::TrackedControllerRole_RightHand)
 		{
-			controllerPoses[0] = poses[unTrackedDevice];
-			if (controllerPoses[0].bPoseIsValid)
+			if (poses[unTrackedDevice].bPoseIsValid)
 			{
-				osg::Matrix matrix = convertMatrix34(controllerPoses[0].mDeviceToAbsoluteTracking);
+				osg::Matrix matrix = convertMatrix34(poses[unTrackedDevice].mDeviceToAbsoluteTracking);
 				osg::Matrix poseTransform = osg::Matrix::inverse(matrix);
-				m_leftControllerPosition = poseTransform.getTrans() * m_worldUnitsPerMetre;
-				m_leftOrientation = poseTransform.getRotate();
-				// 控制器运动速度
-				vr::HmdVector3_t m_leftVelocity = controllerPoses[1].vVelocity;
-				// 控制器旋转速度
-				vr::HmdVector3_t m_leftAngularVelocity = controllerPoses[1].vAngularVelocity;
-				
-			}
-		}
-		else if (controllerRole == vr::TrackedControllerRole_RightHand)
-		{
-			controllerPoses[1] = poses[unTrackedDevice];
-			if (controllerPoses[1].bPoseIsValid)
-			{
-				osg::Matrix matrix = convertMatrix34(controllerPoses[1].mDeviceToAbsoluteTracking);
-				osg::Matrix poseTransform = osg::Matrix::inverse(matrix);
-				
-				// 控制器位置
 				m_rightControllerPosition = poseTransform.getTrans() * m_worldUnitsPerMetre;
-				// 控制器方向
 				m_rightOrientation = poseTransform.getRotate();
-				// 控制器运动速度
-				vr::HmdVector3_t m_rightVelocity = controllerPoses[1].vVelocity;
-				// 控制器旋转速度
-				vr::HmdVector3_t m_rightAngularVelocity = controllerPoses[1].vAngularVelocity;
+				vr::HmdVector3_t m_rightVelocity = poses[unTrackedDevice].vVelocity;
+				vr::HmdVector3_t m_rightAngularVelocity = poses[unTrackedDevice].vAngularVelocity;
+
+				//std::cout << m_rightControllerPosition.x() << "," << m_rightControllerPosition.y() << "," << m_rightControllerPosition.z() << std::endl;
 
 			}
 		}
@@ -641,6 +623,19 @@ void OpenVRDevice::ProcessVREvent(const vr::VREvent_t& event)
 				//getControllerPose();
 				printf("TrackedControllerRole_RightHand triggerpress.\n", event.trackedDeviceIndex);
 				controllerEventResult = 1;
+			}
+
+		}
+		else if (event.data.controller.button == vr::EVRButtonId::k_EButton_Grip)
+		{
+			// 判断左右手控制器
+			vr::ETrackedControllerRole controllerRole = m_vrSystem->GetControllerRoleForTrackedDeviceIndex(event.trackedDeviceIndex);
+
+			// 主要用右手
+			if (controllerRole == vr::TrackedControllerRole_RightHand)
+			{
+				printf("TrackedControllerRole_RightHand grippress.\n", event.trackedDeviceIndex);
+				controllerEventResult = 2;
 			}
 
 		}

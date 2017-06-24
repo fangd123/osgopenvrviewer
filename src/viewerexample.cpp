@@ -23,16 +23,24 @@ public:
 
     virtual void eventTraversal()
     {
+
+
 		//printf("%u\n", openvrDevice->controllerEventResult);
 		// 添加VR事件响应，映射成鼠标事件
 		// 按下trigger时，进行旋转
 		// 按下trackpad时，进行缩放
 		// TODO 按下trigger并触摸trackpad时，进行平移
+
 		if (openvrDevice->controllerEventResult == 1)
 		{
 			// 目前只考虑右手
 			// 对应鼠标拖拽操作
+			// TODO 控制事件刷新速度，防止过快刷新
+			// 数据平滑问题
 			osg::ref_ptr<osgGA::GUIEventAdapter> controllerEvent = new osgGA::GUIEventAdapter;
+			//controllerEvent->setEventType(osgGA::GUIEventAdapter::KEYDOWN);
+			//controllerEvent->setKey(osgGA::GUIEventAdapter::KEY_Space);
+
 			controllerEvent->setEventType(osgGA::GUIEventAdapter::DRAG);
 			// 按照OSG坐标系统，映射到平面上的就是X和z坐标
 
@@ -44,12 +52,18 @@ public:
 
 			osg::Vec3 screenPosition = openvrDevice->m_rightControllerPosition;
 
-			//std::cout << screenPosition.x() << "," << screenPosition.y() << "," << screenPosition.z() << ';' << std::endl;
-			controllerEvent->setX(screenPosition.x());
-			controllerEvent->setY(screenPosition.y());
+			
+			controllerEvent->setX((screenPosition.x()) * 1000);
+			controllerEvent->setY((screenPosition.y()) * 1000);
 
 			controllerEvent->setButtonMask(osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON);
 			_graphicsWindow->getEventQueue()->addEvent(controllerEvent);
+		}
+		else if (openvrDevice->controllerEventResult == 2)
+		{
+			osg::ref_ptr<osgGA::GUIEventAdapter> controllerEvent = new osgGA::GUIEventAdapter;
+			controllerEvent->setEventType(osgGA::GUIEventAdapter::SCROLL);
+			controllerEvent->setScrollingMotion(osgGA::GUIEventAdapter::SCROLL_DOWN);
 		}
 
         if (_graphicsWindow.valid() && _graphicsWindow->checkEvents())
@@ -107,7 +121,8 @@ int main( int argc, char** argv )
     }
 
     // Create Trackball manipulator
-    osg::ref_ptr<osgGA::CameraManipulator> cameraManipulator = new osgGA::TrackballManipulator;
+    osg::ref_ptr<osgGA::CameraManipulator> cameraManipulator = new osgGA::OrbitManipulator;
+
     const osg::BoundingSphere& bs = loadedModel->getBound();
 
     if (bs.valid())

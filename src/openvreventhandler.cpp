@@ -5,6 +5,7 @@
  *      Author: Chris Denham
  */
 
+#include <iostream>
 #include "openvreventhandler.h"
 #include "openvrdevice.h"
 
@@ -19,11 +20,14 @@ bool OpenVREventHandler::handle(const osgGA::GUIEventAdapter& ea,osgGA::GUIActio
                 case osgGA::GUIEventAdapter::KEY_R:
                     m_openvrDevice->resetSensorOrientation();
                     break;
+				case osgGA::GUIEventAdapter::KEY_B:
+					std::cout << "Keyborad B" << std::endl;
             }
         }
-		case osgGA::GUIEventAdapter::DRAG:
+		case(osgGA::GUIEventAdapter::DRAG):
 		{
-			printf("mouse position:%d ,%d\n", ea.getX(),ea.getY());
+			std::cout << ea.getX() << "," << ea.getY() << "," << ea.getXnormalized() << "," << ea.getYnormalized() << std::endl;
+			return false;
 		}
     }
 
