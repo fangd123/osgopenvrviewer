@@ -133,10 +133,6 @@ public:
     } Eye;
 
 	// VR 环境模型
-	osg::ref_ptr<osg::Node> sceneNode;
-	osg::ref_ptr<osg::Node> controllerNode;
-	osg::ref_ptr<osg::Node> renderModelNode;
-	osg::ref_ptr<osg::Node> companionWindowNode;
 	bool m_rbShowTrackedDevice[vr::k_unMaxTrackedDeviceCount];
 	int m_iTrackedControllerCount;
 	vr::TrackedDevicePose_t poses[vr::k_unMaxTrackedDeviceCount];
@@ -179,6 +175,8 @@ public:
     osg::GraphicsContext::Traits* graphicsContextTraits() const;
 
 	uint32_t controllerEventResult = 0;  // 控制器按钮的结果
+	osg::Vec2 m_touchpadTouchPosition;
+	osg::Vec2 m_touchpadPreTouchPosition;
 	osg::Vec3 m_leftControllerPosition;
 	osg::Vec3 m_rightControllerPosition;
 	osg::Quat m_leftOrientation;

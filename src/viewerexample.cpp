@@ -30,42 +30,58 @@ public:
 		// 按下trigger时，进行旋转
 		// 按下trackpad时，进行缩放
 		// TODO 按下trigger并触摸trackpad时，进行平移
-
-		if (openvrDevice->controllerEventResult == 1)
-		{
-			// 目前只考虑右手
-			// 对应鼠标拖拽操作
-			// TODO 控制事件刷新速度，防止过快刷新
-			// 数据平滑问题
+	    if (openvrDevice->controllerEventResult != 0)
+	    {
 			osg::ref_ptr<osgGA::GUIEventAdapter> controllerEvent = new osgGA::GUIEventAdapter;
-			//controllerEvent->setEventType(osgGA::GUIEventAdapter::KEYDOWN);
-			//controllerEvent->setKey(osgGA::GUIEventAdapter::KEY_Space);
+			switch (openvrDevice->controllerEventResult)
+			{
+			case 1:
+			{
+				controllerEvent->setEventType(osgGA::GUIEventAdapter::DRAG);
+				// 按照OSG坐标系统，映射到平面上的就是X和z坐标
+				//osg::Matrix VPW = camera->getViewMatrix() *
+				//	camera->getProjectionMatrix() *
+				//	camera->getViewport()->computeWindowMatrix();
 
-			controllerEvent->setEventType(osgGA::GUIEventAdapter::DRAG);
-			// 按照OSG坐标系统，映射到平面上的就是X和z坐标
+				controllerEvent->setX(openvrDevice->m_touchpadTouchPosition.x());
+				controllerEvent->setY(openvrDevice->m_touchpadTouchPosition.y());
 
-			osg::ref_ptr<osg::Camera> camera = this->getCamera();
-
-			osg::Matrix VPW = camera->getViewMatrix() *
-				camera->getProjectionMatrix() *
-				camera->getViewport()->computeWindowMatrix();
-
-			osg::Vec3 screenPosition = openvrDevice->m_rightControllerPosition;
-
-			
-			controllerEvent->setX((screenPosition.x()) * 1000);
-			controllerEvent->setY((screenPosition.y()) * 1000);
-
-			controllerEvent->setButtonMask(osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON);
+				controllerEvent->setButtonMask(osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON);
+			}
+			break;
+			case 2:
+			{
+				osg::ref_ptr<osgGA::GUIEventAdapter> controllerEvent = new osgGA::GUIEventAdapter;
+				controllerEvent->setEventType(osgGA::GUIEventAdapter::SCROLL);
+				controllerEvent->setScrollingMotion(osgGA::GUIEventAdapter::SCROLL_UP);
+				// 目前直接使用屏幕中央作为缩放点
+				osg::ref_ptr<osg::Camera> camera = this->getCamera();
+				// TODO 设置为viewpoint的中心
+				controllerEvent->setX(200);
+				controllerEvent->setY(200);
+			}
+			break;
+			case 3:
+				{
+				osg::ref_ptr<osgGA::GUIEventAdapter> controllerEvent = new osgGA::GUIEventAdapter;
+				controllerEvent->setEventType(osgGA::GUIEventAdapter::SCROLL);
+				controllerEvent->setScrollingMotion(osgGA::GUIEventAdapter::SCROLL_DOWN);
+				// 目前直接使用屏幕中央作为缩放点
+				osg::ref_ptr<osg::Camera> camera = this->getCamera();
+				// TODO 设置为viewpoint的中心
+				controllerEvent->setX(200);
+				controllerEvent->setY(200);
+				}
+			default:
+				{
+					
+				}
+			}
 			_graphicsWindow->getEventQueue()->addEvent(controllerEvent);
-		}
-		else if (openvrDevice->controllerEventResult == 2)
-		{
-			osg::ref_ptr<osgGA::GUIEventAdapter> controllerEvent = new osgGA::GUIEventAdapter;
-			controllerEvent->setEventType(osgGA::GUIEventAdapter::SCROLL);
-			controllerEvent->setScrollingMotion(osgGA::GUIEventAdapter::SCROLL_DOWN);
-		}
-
+			  
+	    }
+	    
+		
         if (_graphicsWindow.valid() && _graphicsWindow->checkEvents())
         {
 

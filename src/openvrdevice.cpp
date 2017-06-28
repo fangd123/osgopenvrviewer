@@ -255,6 +255,8 @@ OpenVRDevice::OpenVRDevice(float nearClip, float farClip, const float worldUnits
     m_orientation(osg::Quat(0.0f, 0.0f, 0.0f, 1.0f)),
 	m_leftOrientation(osg::Quat(0.0f, 0.0f, 0.0f, 1.0f)),
 	m_rightOrientation(osg::Quat(0.0f, 0.0f, 0.0f, 1.0f)),
+	m_touchpadTouchPosition(osg::Vec2(0.0f, 0.0f)),
+	m_touchpadPreTouchPosition(osg::Vec2(0.0f,0.0f)),
     m_nearClip(nearClip), m_farClip(farClip),
     m_samples(samples)
 {
@@ -593,6 +595,8 @@ void OpenVRDevice::shutdown(osg::GraphicsContext* gc)
 //-----------------------------------------------------------------------------
 void OpenVRDevice::ProcessVREvent(const vr::VREvent_t& event)
 {
+	vr::ETrackedControllerRole controllerRole = m_vrSystem->GetControllerRoleForTrackedDeviceIndex(event.trackedDeviceIndex);
+
 	switch (event.eventType)
 	{
 	case vr::VREvent_TrackedDeviceActivated:
@@ -612,49 +616,92 @@ void OpenVRDevice::ProcessVREvent(const vr::VREvent_t& event)
 	break;
 	case vr::VREvent_ButtonPress:
 	{
+		vr::VRControllerState_t state;
+		// 缩放
+		// 按到底为放大
+		// 按到底之后往回为缩小
 		if (event.data.controller.button == vr::EVRButtonId::k_EButton_SteamVR_Trigger)
 		{
-			// 判断左右手控制器
-			vr::ETrackedControllerRole controllerRole = m_vrSystem->GetControllerRoleForTrackedDeviceIndex(event.trackedDeviceIndex);
-
 			// 主要用右手
 			if (controllerRole == vr::TrackedControllerRole_RightHand)
 			{
-				//getControllerPose();
-				printf("TrackedControllerRole_RightHand triggerpress.\n", event.trackedDeviceIndex);
-				controllerEventResult = 1;
+
+				m_vrSystem->GetControllerState(event.trackedDeviceIndex, &state, sizeof(state));
+				// 按到底
+				if (state.rAxis->x >= 1.0f)
+				{
+					//getControllerPose();
+					printf("TrackedControllerRole_RightHand trigger clicked.\n", event.trackedDeviceIndex);
+					m_touchpadPreTouchPosition.set(1.0f, 0.0f);
+					m_touchpadTouchPosition.set(1.0f, 0.0f);
+					controllerEventResult = 2;
+				}
+				// 往回按，x越来越小
+				else if(state.rAxis->x < m_touchpadPreTouchPosition.x() && m_touchpadTouchPosition.x() < 1.0f)
+				{
+					printf("TrackedControllerRole_RightHand trigger clicked.\n", event.trackedDeviceIndex);
+					m_touchpadPreTouchPosition.set(m_touchpadTouchPosition.x(), 0.0f);
+					m_touchpadTouchPosition.set(state.rAxis->x, 0.0f);
+					controllerEventResult = 3;
+				}
+				else
+				{
+					controllerEventResult = 0;
+
+				}
+
 			}
+
+			// 方案二：按住trigger键，同时按住touchpad，横着按，左右旋转
+			//m_vrSystem->GetControllerState(event.trackedDeviceIndex, &state, sizeof(state));
+			//// 按到底
+			//if (state.rAxis->x >= 1.0f)
+			//{
+			//	controllerEventResult = 2;
+			//}
 
 		}
-		else if (event.data.controller.button == vr::EVRButtonId::k_EButton_Grip)
+		// 使用touchpad进行旋转操作
+		// 直接返回touchpad的坐标
+		else if (event.data.controller.button == vr::k_EButton_SteamVR_Touchpad)
 		{
-			// 判断左右手控制器
-			vr::ETrackedControllerRole controllerRole = m_vrSystem->GetControllerRoleForTrackedDeviceIndex(event.trackedDeviceIndex);
-
-			// 主要用右手
-			if (controllerRole == vr::TrackedControllerRole_RightHand)
+			m_vrSystem->GetControllerState(event.trackedDeviceIndex, &state, sizeof(state));
+			if (m_touchpadPreTouchPosition.x() != state.rAxis->x || m_touchpadPreTouchPosition.y() != state.rAxis->y)
 			{
-				printf("TrackedControllerRole_RightHand grippress.\n", event.trackedDeviceIndex);
-				controllerEventResult = 2;
+				m_touchpadPreTouchPosition.set(m_touchpadTouchPosition.x(), m_touchpadTouchPosition.y());
+				m_touchpadTouchPosition.set(state.rAxis->x, state.rAxis->y);
 			}
-
+			controllerEventResult = 1;
 		}
 	}
 	break;
 	case vr::VREvent_ButtonUnpress:
 	{
-		// 判断左右手控制器
-		vr::ETrackedControllerRole controllerRole = m_vrSystem->GetControllerRoleForTrackedDeviceIndex(event.trackedDeviceIndex);
-
-		// 主要用右手
+		// 右手
 		if (controllerRole == vr::TrackedControllerRole_RightHand)
 		{
-			//getControllerPose();
-			printf("TrackedControllerRole_RightHand triggerun.\n", event.trackedDeviceIndex);
-			controllerEventResult = 0;
+			// touchpad 松开，旋转结束
+			if (event.data.controller.button == vr::k_EButton_SteamVR_Touchpad)
+			{
+				printf("TrackedControllerRole_RightHand touchpad unpress.\n", event.trackedDeviceIndex);
+
+				controllerEventResult = 0;
+			}
 		}
 	}
 	break;
+	case vr::VREvent_ButtonTouch:
+	{
+		// 右手
+		if (controllerRole == vr::TrackedControllerRole_RightHand)
+		{
+			// touchpad 平移
+			if (event.data.controller.button == vr::k_EButton_SteamVR_Touchpad)
+			{
+
+			}
+		}
+	}
 	}
 
 
