@@ -458,6 +458,28 @@ void OpenVRDevice::getControllerPose()
 				vr::HmdVector3_t m_rightVelocity = poses[unTrackedDevice].vVelocity;
 				vr::HmdVector3_t m_rightAngularVelocity = poses[unTrackedDevice].vAngularVelocity;
 
+
+				// 存储最近100帧的pose数据
+				if(frameIndex < 100)
+				{
+					controller_poses->push_back(m_rightControllerPosition);
+					frameIndex++;
+				}
+				else
+				{
+					frameIndex = 0;
+					double x_total, y_total, z_total;
+					
+					// 计算当前100帧的平均位置
+					for (uint32_t i = 0;i < controller_poses->getNumElements();i++)
+					{
+						osg::Vec3f pose = controller_poses->at(i);
+						x_total += pose.x();
+						y_total += pose.y();
+						z_total += pose.z();
+						averagePosition.set(x_total/100,y_total/100,z_total/100);
+					}
+				}
 				//std::cout << m_rightControllerPosition.x() << "," << m_rightControllerPosition.y() << "," << m_rightControllerPosition.z() << std::endl;
 
 			}
@@ -625,8 +647,8 @@ void OpenVRDevice::ProcessVREvent(const vr::VREvent_t& event)
 			// 主要用右手
 			if (controllerRole == vr::TrackedControllerRole_RightHand)
 			{
-
-				m_vrSystem->GetControllerState(event.trackedDeviceIndex, &state, sizeof(state));
+				vr::TrackedDevicePose_t 
+				m_vrSystem->GetControllerStateWithPose(event.trackedDeviceIndex, &state, sizeof(state));
 				// 按到底
 				if (state.rAxis->x >= 1.0f)
 				{

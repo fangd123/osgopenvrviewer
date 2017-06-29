@@ -18,6 +18,7 @@
 #include <osgViewer/Renderer>
 #include <osg/Program>
 #include <osg/Shader>  
+#include <array>
 
 
 #if(OSG_VERSION_GREATER_OR_EQUAL(3, 4, 0))
@@ -178,6 +179,7 @@ public:
 	osg::Vec2 m_touchpadTouchPosition;
 	osg::Vec2 m_touchpadPreTouchPosition;
 	osg::Vec3 m_leftControllerPosition;
+	osg::Vec3f averagePosition;
 	osg::Vec3 m_rightControllerPosition;
 	osg::Quat m_leftOrientation;
 	osg::Quat m_rightOrientation;
@@ -209,7 +211,8 @@ protected:
     int m_samples;
 private:
 
-
+	uint32_t frameIndex = 0;
+	osg::ref_ptr<osg::Vec3Array> controller_poses = new osg::Vec3Array;
     std::string GetDeviceProperty(vr::TrackedDeviceProperty prop);
     OpenVRDevice(const OpenVRDevice&); // Do not allow copy
     OpenVRDevice& operator=(const OpenVRDevice&); // Do not allow assignment operator.

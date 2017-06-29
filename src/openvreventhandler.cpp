@@ -29,6 +29,11 @@ bool OpenVREventHandler::handle(const osgGA::GUIEventAdapter& ea,osgGA::GUIActio
 			std::cout << ea.getX() << "," << ea.getY() << "," << ea.getXnormalized() << "," << ea.getYnormalized() << std::endl;
 			return false;
 		}
+		case(osgGA::GUIEventAdapter::USER):
+		{
+			int x;
+			ea.getUserValue("position", x);
+		}
     }
 
     return osgGA::GUIEventHandler::handle(ea, ad);

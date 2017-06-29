@@ -72,6 +72,12 @@ public:
 				controllerEvent->setX(200);
 				controllerEvent->setY(200);
 				}
+				break;
+			case 4:
+				{
+				controllerEvent->setEventType(osgGA::GUIEventAdapter::USER);
+				controllerEvent->setUserValue("position", 200);
+				}
 			default:
 				{
 					
