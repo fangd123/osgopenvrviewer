@@ -24,15 +24,11 @@ bool OpenVREventHandler::handle(const osgGA::GUIEventAdapter& ea,osgGA::GUIActio
 					std::cout << "Keyborad B" << std::endl;
             }
         }
+		break;
 		case(osgGA::GUIEventAdapter::DRAG):
 		{
-			std::cout << ea.getX() << "," << ea.getY() << "," << ea.getXnormalized() << "," << ea.getYnormalized() << std::endl;
+			//std::cout << ea.getX() << "," << ea.getY() << "," << ea.getXnormalized() << "," << ea.getYnormalized() << std::endl;
 			return false;
-		}
-		case(osgGA::GUIEventAdapter::USER):
-		{
-			int x;
-			ea.getUserValue("position", x);
 		}
     }
 

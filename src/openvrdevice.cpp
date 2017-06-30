@@ -468,7 +468,7 @@ void OpenVRDevice::getControllerPose()
 				else
 				{
 					frameIndex = 0;
-					double x_total, y_total, z_total;
+					double x_total = 0, y_total = 0, z_total = 0;
 					
 					// 计算当前100帧的平均位置
 					for (uint32_t i = 0;i < controller_poses->getNumElements();i++)
@@ -617,7 +617,21 @@ void OpenVRDevice::shutdown(osg::GraphicsContext* gc)
 //-----------------------------------------------------------------------------
 void OpenVRDevice::ProcessVREvent(const vr::VREvent_t& event)
 {
+
+
 	vr::ETrackedControllerRole controllerRole = m_vrSystem->GetControllerRoleForTrackedDeviceIndex(event.trackedDeviceIndex);
+	prevState = state;
+
+	m_vrSystem->GetControllerState(event.trackedDeviceIndex, &state, sizeof(state));
+
+	if (state.rAxis[1].x < prevState.rAxis[1].x)
+	{
+		printf("TrackedControllerRole_RightHand trigger clicked.\n", event.trackedDeviceIndex);
+		controllerEventResult = 3;
+		return;
+	}
+	printf("TrackedControllerRole_RightHand trigger clicked.%f\n", state.rAxis[1].x);
+	//printf("TrackedControllerRole_RightHand trigger clicked.prev %f\n", prevState.rAxis[1].x);
 
 	switch (event.eventType)
 	{
@@ -638,7 +652,7 @@ void OpenVRDevice::ProcessVREvent(const vr::VREvent_t& event)
 	break;
 	case vr::VREvent_ButtonPress:
 	{
-		vr::VRControllerState_t state;
+		
 		// 缩放
 		// 按到底为放大
 		// 按到底之后往回为缩小
@@ -647,25 +661,17 @@ void OpenVRDevice::ProcessVREvent(const vr::VREvent_t& event)
 			// 主要用右手
 			if (controllerRole == vr::TrackedControllerRole_RightHand)
 			{
-				vr::TrackedDevicePose_t 
-				m_vrSystem->GetControllerStateWithPose(event.trackedDeviceIndex, &state, sizeof(state));
-				// 按到底
-				if (state.rAxis->x >= 1.0f)
+
+				m_vrSystem->GetControllerState(event.trackedDeviceIndex, &state, sizeof(state));
+
+				// 往下按放大
+				if (state.rAxis[1].x >= prevState.rAxis[1].x)
 				{
-					//getControllerPose();
-					printf("TrackedControllerRole_RightHand trigger clicked.\n", event.trackedDeviceIndex);
-					m_touchpadPreTouchPosition.set(1.0f, 0.0f);
-					m_touchpadTouchPosition.set(1.0f, 0.0f);
+					printf("TrackedControllerRole_RightHand trigger clicked.%f\n", state.rAxis[1].x);
+
 					controllerEventResult = 2;
 				}
 				// 往回按，x越来越小
-				else if(state.rAxis->x < m_touchpadPreTouchPosition.x() && m_touchpadTouchPosition.x() < 1.0f)
-				{
-					printf("TrackedControllerRole_RightHand trigger clicked.\n", event.trackedDeviceIndex);
-					m_touchpadPreTouchPosition.set(m_touchpadTouchPosition.x(), 0.0f);
-					m_touchpadTouchPosition.set(state.rAxis->x, 0.0f);
-					controllerEventResult = 3;
-				}
 				else
 				{
 					controllerEventResult = 0;
@@ -673,14 +679,6 @@ void OpenVRDevice::ProcessVREvent(const vr::VREvent_t& event)
 				}
 
 			}
-
-			// 方案二：按住trigger键，同时按住touchpad，横着按，左右旋转
-			//m_vrSystem->GetControllerState(event.trackedDeviceIndex, &state, sizeof(state));
-			//// 按到底
-			//if (state.rAxis->x >= 1.0f)
-			//{
-			//	controllerEventResult = 2;
-			//}
 
 		}
 		// 使用touchpad进行旋转操作
@@ -692,8 +690,13 @@ void OpenVRDevice::ProcessVREvent(const vr::VREvent_t& event)
 			{
 				m_touchpadPreTouchPosition.set(m_touchpadTouchPosition.x(), m_touchpadTouchPosition.y());
 				m_touchpadTouchPosition.set(state.rAxis->x, state.rAxis->y);
+				printf("touchPad previous position %d,%d", m_touchpadPreTouchPosition.x(), m_touchpadPreTouchPosition.y());
 			}
 			controllerEventResult = 1;
+		}
+		else if (event.data.controller.button == vr::k_EButton_Grip)
+		{
+			controllerEventResult = 6;
 		}
 	}
 	break;
@@ -707,7 +710,7 @@ void OpenVRDevice::ProcessVREvent(const vr::VREvent_t& event)
 			{
 				printf("TrackedControllerRole_RightHand touchpad unpress.\n", event.trackedDeviceIndex);
 
-				controllerEventResult = 0;
+				controllerEventResult = 5;
 			}
 		}
 	}
@@ -720,13 +723,17 @@ void OpenVRDevice::ProcessVREvent(const vr::VREvent_t& event)
 			// touchpad 平移
 			if (event.data.controller.button == vr::k_EButton_SteamVR_Touchpad)
 			{
-
+				m_vrSystem->GetControllerState(event.trackedDeviceIndex, &state, sizeof(state));
+				if (m_touchpadPreTouchPosition.x() != state.rAxis->x || m_touchpadPreTouchPosition.y() != state.rAxis->y)
+				{
+					m_touchpadPreTouchPosition.set(m_touchpadTouchPosition.x(), m_touchpadTouchPosition.y());
+					m_touchpadTouchPosition.set(state.rAxis->x, state.rAxis->y);
+					printf("touchPad previous position %d,%d", m_touchpadPreTouchPosition.x(), m_touchpadPreTouchPosition.y());
+				}
 			}
 		}
 	}
 	}
-
-
 }
 
 //-----------------------------------------------------------------------------

@@ -15,10 +15,13 @@
 class GraphicsWindowViewer : public osgViewer::Viewer
 {
 public:
+
     GraphicsWindowViewer(osg::ref_ptr<OpenVRDevice> openvr,osg::ArgumentParser& arguments, osgViewer::GraphicsWindow* graphicsWindow)
         : osgViewer::Viewer(arguments), _graphicsWindow(graphicsWindow)
     {
 		openvrDevice = openvr;
+		fake_position_x = 0;
+		fake_position_y = 0;
     }
 
     virtual void eventTraversal()
@@ -33,59 +36,98 @@ public:
 	    if (openvrDevice->controllerEventResult != 0)
 	    {
 			osg::ref_ptr<osgGA::GUIEventAdapter> controllerEvent = new osgGA::GUIEventAdapter;
+			if (openvrDevice->controllerEventResult == 3)
+			{
+				printf("3\n");
+			}
 			switch (openvrDevice->controllerEventResult)
 			{
 			case 1:
 			{
-				controllerEvent->setEventType(osgGA::GUIEventAdapter::DRAG);
-				// 按照OSG坐标系统，映射到平面上的就是X和z坐标
-				//osg::Matrix VPW = camera->getViewMatrix() *
-				//	camera->getProjectionMatrix() *
-				//	camera->getViewport()->computeWindowMatrix();
 
-				controllerEvent->setX(openvrDevice->m_touchpadTouchPosition.x());
-				controllerEvent->setY(openvrDevice->m_touchpadTouchPosition.y());
+				controllerEvent->setEventType(osgGA::GUIEventAdapter::DRAG);
+				double angle = VectorAngle(openvrDevice->m_touchpadTouchPosition);
+				if (angle > 45 && angle < 135)
+				{
+					printf("down");
+					controllerEvent->setY(fake_position_x + openvrDevice->m_touchpadTouchPosition.y() * 100);
+
+				}
+				//上  
+				if (angle < -45 && angle > -135)
+				{
+					printf("up");
+					controllerEvent->setY(openvrDevice->m_touchpadTouchPosition.y() * 100 - fake_position_x);
+
+				}
+				//左  
+				if ((angle < 180 && angle > 135) || (angle < -135 && angle > -180))
+				{
+					controllerEvent->setX(fake_position_x + openvrDevice->m_touchpadTouchPosition.x() * 100);
+					printf("left");
+				}
+				//右  
+				if ((angle > 0 && angle < 45) || (angle > -45 && angle < 0))
+				{
+					controllerEvent->setX( openvrDevice->m_touchpadTouchPosition.x() * 100 - fake_position_x);
+					printf("right");
+				}
+				fake_position_x += 1;
+				fake_position_y += 1;
 
 				controllerEvent->setButtonMask(osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON);
 			}
 			break;
 			case 2:
 			{
-				osg::ref_ptr<osgGA::GUIEventAdapter> controllerEvent = new osgGA::GUIEventAdapter;
-				controllerEvent->setEventType(osgGA::GUIEventAdapter::SCROLL);
-				controllerEvent->setScrollingMotion(osgGA::GUIEventAdapter::SCROLL_UP);
-				// 目前直接使用屏幕中央作为缩放点
-				osg::ref_ptr<osg::Camera> camera = this->getCamera();
-				// TODO 设置为viewpoint的中心
-				controllerEvent->setX(200);
-				controllerEvent->setY(200);
+				controllerEvent->setEventType(osgGA::GUIEventAdapter::DRAG);
+				controllerEvent->setButtonMask(osgGA::GUIEventAdapter::RIGHT_MOUSE_BUTTON);
+				controllerEvent->setX(0);
+				controllerEvent->setY(fake_position_y);
+				fake_position_y += 1;
 			}
 			break;
 			case 3:
 				{
-				osg::ref_ptr<osgGA::GUIEventAdapter> controllerEvent = new osgGA::GUIEventAdapter;
-				controllerEvent->setEventType(osgGA::GUIEventAdapter::SCROLL);
-				controllerEvent->setScrollingMotion(osgGA::GUIEventAdapter::SCROLL_DOWN);
-				// 目前直接使用屏幕中央作为缩放点
-				osg::ref_ptr<osg::Camera> camera = this->getCamera();
-				// TODO 设置为viewpoint的中心
-				controllerEvent->setX(200);
-				controllerEvent->setY(200);
+				controllerEvent->setEventType(osgGA::GUIEventAdapter::DRAG);
+				controllerEvent->setButtonMask(osgGA::GUIEventAdapter::RIGHT_MOUSE_BUTTON);
+				controllerEvent->setX(0);
+				controllerEvent->setY(fake_position_y);
+				fake_position_y -= 1;
 				}
 				break;
-			case 4:
-				{
-				controllerEvent->setEventType(osgGA::GUIEventAdapter::USER);
-				controllerEvent->setUserValue("position", 200);
-				}
+			case 5:
+			{
+				controllerEvent->setEventType(osgGA::GUIEventAdapter::RELEASE);
+				controllerEvent->setButtonMask(0);
+				controllerEvent->setX(0);
+				controllerEvent->setY(0);
+			}
+			break;
+			case 6:
+			{
+				controllerEvent->setEventType(osgGA::GUIEventAdapter::PUSH);
+				controllerEvent->setButtonMask(osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON);
+			}
+			break;
 			default:
 				{
-					
+				controllerEvent->setEventType(osgGA::GUIEventAdapter::RELEASE);
+				controllerEvent->setButtonMask(0);
+				controllerEvent->setX(0);
+				controllerEvent->setY(0);
+				fake_position_x = 0;
+				fake_position_y = 0;
 				}
 			}
 			_graphicsWindow->getEventQueue()->addEvent(controllerEvent);
 			  
 	    }
+		else
+		{
+			fake_position_x = 0;
+			fake_position_y = 0;
+		}
 	    
 		
         if (_graphicsWindow.valid() && _graphicsWindow->checkEvents())
@@ -123,6 +165,27 @@ public:
 private:
     osg::ref_ptr<osgViewer::GraphicsWindow> _graphicsWindow;
 	osg::ref_ptr<OpenVRDevice> openvrDevice;
+
+	double fake_position_x;
+	double fake_position_y;
+
+	double VectorAngle(osg::Vec2f &v2)
+	{
+		osg::Vec2f v1(1, 0);
+		double up = v1*v2;
+		double down = v1.length() * v2.length();
+		double cosr = up / down;
+		double angle = acos(cosr) * 180 / osg::PI;
+		if (v2.x() < 0 && v2.y() < 0)
+		{
+			angle = -angle;
+		}
+		else if (v2.x() > 0 && v2.y() < 0)
+		{
+			angle = -angle;
+		}
+		return angle;
+	}
 };
 
 int main( int argc, char** argv )
@@ -144,7 +207,6 @@ int main( int argc, char** argv )
 
     // Create Trackball manipulator
     osg::ref_ptr<osgGA::CameraManipulator> cameraManipulator = new osgGA::OrbitManipulator;
-
     const osg::BoundingSphere& bs = loadedModel->getBound();
 
     if (bs.valid())

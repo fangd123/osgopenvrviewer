@@ -212,6 +212,8 @@ protected:
 private:
 
 	uint32_t frameIndex = 0;
+	vr::VRControllerState_t state;
+	vr::VRControllerState_t prevState;
 	osg::ref_ptr<osg::Vec3Array> controller_poses = new osg::Vec3Array;
     std::string GetDeviceProperty(vr::TrackedDeviceProperty prop);
     OpenVRDevice(const OpenVRDevice&); // Do not allow copy
