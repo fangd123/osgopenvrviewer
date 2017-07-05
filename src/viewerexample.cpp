@@ -50,27 +50,26 @@ public:
 				if (angle > 45 && angle < 135)
 				{
 					printf("down");
-					controllerEvent->setY(fake_position_x + openvrDevice->m_touchpadTouchPosition.y() * 100);
+					controllerEvent->setY(fake_position_y);
 
 				}
 				//上  
 				if (angle < -45 && angle > -135)
 				{
 					printf("up");
-					controllerEvent->setY(openvrDevice->m_touchpadTouchPosition.y() * 100 - fake_position_x);
+					controllerEvent->setY(-fake_position_y);
 
 				}
 				//左  
 				if ((angle < 180 && angle > 135) || (angle < -135 && angle > -180))
 				{
-					controllerEvent->setX(fake_position_x + openvrDevice->m_touchpadTouchPosition.x() * 100);
+					controllerEvent->setX(fake_position_x);
 					printf("left");
 				}
 				//右  
 				if ((angle > 0 && angle < 45) || (angle > -45 && angle < 0))
 				{
-					controllerEvent->setX( openvrDevice->m_touchpadTouchPosition.x() * 100 - fake_position_x);
-					printf("right");
+					controllerEvent->setX(-fake_position_x);
 				}
 				fake_position_x += 1;
 				fake_position_y += 1;
@@ -108,6 +107,42 @@ public:
 			{
 				controllerEvent->setEventType(osgGA::GUIEventAdapter::PUSH);
 				controllerEvent->setButtonMask(osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON);
+			}
+			break;
+			case 7:
+			{
+
+				controllerEvent->setEventType(osgGA::GUIEventAdapter::DRAG);
+				double angle = VectorAngle(openvrDevice->m_touchpadTouchPosition);
+				if (angle > 45 && angle < 135)
+				{
+					printf("down");
+					controllerEvent->setY(fake_position_y);
+
+				}
+				//上  
+				if (angle < -45 && angle > -135)
+				{
+					printf("up");
+					controllerEvent->setY(-fake_position_y);
+
+				}
+				//左  
+				if ((angle < 180 && angle > 135) || (angle < -135 && angle > -180))
+				{
+					controllerEvent->setX(fake_position_x);
+					printf("left");
+				}
+				//右  
+				if ((angle > 0 && angle < 45) || (angle > -45 && angle < 0))
+				{
+					controllerEvent->setX(-fake_position_x);
+					printf("right");
+				}
+				fake_position_x += 1;
+				fake_position_y += 1;
+
+				controllerEvent->setButtonMask(osgGA::GUIEventAdapter::MIDDLE_MOUSE_BUTTON);
 			}
 			break;
 			default:

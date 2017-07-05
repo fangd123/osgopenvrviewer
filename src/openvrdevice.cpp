@@ -655,29 +655,14 @@ void OpenVRDevice::ProcessVREvent(const vr::VREvent_t& event)
 		
 		// 缩放
 		// 按到底为放大
-		// 按到底之后往回为缩小
 		if (event.data.controller.button == vr::EVRButtonId::k_EButton_SteamVR_Trigger)
 		{
 			// 主要用右手
-			if (controllerRole == vr::TrackedControllerRole_RightHand)
+			if (controllerRole == vr::TrackedControllerRole_RightHand )
 			{
-
-				m_vrSystem->GetControllerState(event.trackedDeviceIndex, &state, sizeof(state));
-
-				// 往下按放大
-				if (state.rAxis[1].x >= prevState.rAxis[1].x)
-				{
-					printf("TrackedControllerRole_RightHand trigger clicked.%f\n", state.rAxis[1].x);
-
-					controllerEventResult = 2;
-				}
-				// 往回按，x越来越小
-				else
-				{
-					controllerEventResult = 0;
-
-				}
-
+				// 按住grip键
+				if (controllerEventResult == 6) controllerEventResult = 3;
+				else controllerEventResult = 2;
 			}
 
 		}
@@ -706,7 +691,8 @@ void OpenVRDevice::ProcessVREvent(const vr::VREvent_t& event)
 		if (controllerRole == vr::TrackedControllerRole_RightHand)
 		{
 			// touchpad 松开，旋转结束
-			if (event.data.controller.button == vr::k_EButton_SteamVR_Touchpad)
+			if (event.data.controller.button == vr::k_EButton_SteamVR_Touchpad ||
+				event.data.controller.button == vr::k_EButton_Grip)
 			{
 				printf("TrackedControllerRole_RightHand touchpad unpress.\n", event.trackedDeviceIndex);
 
@@ -729,9 +715,11 @@ void OpenVRDevice::ProcessVREvent(const vr::VREvent_t& event)
 					m_touchpadPreTouchPosition.set(m_touchpadTouchPosition.x(), m_touchpadTouchPosition.y());
 					m_touchpadTouchPosition.set(state.rAxis->x, state.rAxis->y);
 					printf("touchPad previous position %d,%d", m_touchpadPreTouchPosition.x(), m_touchpadPreTouchPosition.y());
+					controllerEventResult = 7;
 				}
 			}
 		}
+		else controllerEventResult = 0;
 	}
 	}
 }
