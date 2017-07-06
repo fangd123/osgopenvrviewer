@@ -624,15 +624,6 @@ void OpenVRDevice::ProcessVREvent(const vr::VREvent_t& event)
 
 	m_vrSystem->GetControllerState(event.trackedDeviceIndex, &state, sizeof(state));
 
-	if (state.rAxis[1].x < prevState.rAxis[1].x)
-	{
-		printf("TrackedControllerRole_RightHand trigger clicked.\n", event.trackedDeviceIndex);
-		controllerEventResult = 3;
-		return;
-	}
-	printf("TrackedControllerRole_RightHand trigger clicked.%f\n", state.rAxis[1].x);
-	//printf("TrackedControllerRole_RightHand trigger clicked.prev %f\n", prevState.rAxis[1].x);
-
 	switch (event.eventType)
 	{
 	case vr::VREvent_TrackedDeviceActivated:
@@ -694,7 +685,7 @@ void OpenVRDevice::ProcessVREvent(const vr::VREvent_t& event)
 			if (event.data.controller.button == vr::k_EButton_SteamVR_Touchpad ||
 				event.data.controller.button == vr::k_EButton_Grip)
 			{
-				printf("TrackedControllerRole_RightHand touchpad unpress.\n", event.trackedDeviceIndex);
+				printf("TrackedControllerRole_RightHand unpress.\n", event.trackedDeviceIndex);
 
 				controllerEventResult = 5;
 			}

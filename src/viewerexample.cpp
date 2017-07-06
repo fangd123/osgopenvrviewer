@@ -35,13 +35,15 @@ public:
 		// TODO 按下trigger并触摸trackpad时，进行平移
 	    if (openvrDevice->controllerEventResult != 0)
 	    {
+			osg::ref_ptr<osgGA::GUIEventAdapter> controllerBeforeEvent = new osgGA::GUIEventAdapter;
 			osg::ref_ptr<osgGA::GUIEventAdapter> controllerEvent = new osgGA::GUIEventAdapter;
-			if (openvrDevice->controllerEventResult == 3)
-			{
-				printf("3\n");
-			}
+			osg::ref_ptr<osgGA::GUIEventAdapter> controllerAfterEvent = new osgGA::GUIEventAdapter;
+
+			controllerBeforeEvent->setEventType(osgGA::GUIEventAdapter::PUSH);
+			controllerAfterEvent->setEventType(osgGA::GUIEventAdapter::RELEASE);
 			switch (openvrDevice->controllerEventResult)
 			{
+
 			case 1:
 			{
 
@@ -99,8 +101,9 @@ public:
 			{
 				controllerEvent->setEventType(osgGA::GUIEventAdapter::RELEASE);
 				controllerEvent->setButtonMask(0);
-				controllerEvent->setX(0);
-				controllerEvent->setY(0);
+				controllerEvent->setX(fake_position_x);
+				controllerEvent->setY(fake_position_y);
+				printf("the position is: %f,%f", controllerEvent->getX(), controllerEvent->getY());
 			}
 			break;
 			case 6:
@@ -148,22 +151,12 @@ public:
 			default:
 				{
 				controllerEvent->setEventType(osgGA::GUIEventAdapter::RELEASE);
+				printf("release actiated!");
 				controllerEvent->setButtonMask(0);
-				controllerEvent->setX(0);
-				controllerEvent->setY(0);
-				fake_position_x = 0;
-				fake_position_y = 0;
 				}
 			}
 			_graphicsWindow->getEventQueue()->addEvent(controllerEvent);
-			  
 	    }
-		else
-		{
-			fake_position_x = 0;
-			fake_position_y = 0;
-		}
-	    
 		
         if (_graphicsWindow.valid() && _graphicsWindow->checkEvents())
         {
@@ -241,7 +234,10 @@ int main( int argc, char** argv )
     }
 
     // Create Trackball manipulator
-    osg::ref_ptr<osgGA::CameraManipulator> cameraManipulator = new osgGA::OrbitManipulator;
+    osg::ref_ptr<osgGA::OrbitManipulator> cameraManipulator = new osgGA::OrbitManipulator;
+	cameraManipulator->setAllowThrow(false);
+	cameraManipulator->setAnimationTime(0);
+
     const osg::BoundingSphere& bs = loadedModel->getBound();
 
     if (bs.valid())
