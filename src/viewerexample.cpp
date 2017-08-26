@@ -261,7 +261,7 @@ int main( int argc, char** argv )
     float nearClip = 0.01f;
     float farClip = 10000.0f;
     float worldUnitsPerMetre = 1.0f;
-    int samples = 4;
+    int samples = 16;
     osg::ref_ptr<OpenVRDevice> openvrDevice = new OpenVRDevice(nearClip, farClip, worldUnitsPerMetre, samples);
 
     // Exit if we fail to initialize the HMD device
