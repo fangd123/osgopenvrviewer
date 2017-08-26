@@ -33,8 +33,8 @@ public:
 		// 按下trigger时，进行旋转
 		// 按下trackpad时，进行缩放
 		// TODO 按下trigger并触摸trackpad时，进行平移
-	    if (openvrDevice->controllerEventResult != 0)
-	    {
+		if (openvrDevice->controllerEventResult != 0)
+		{
 			osg::ref_ptr<osgGA::GUIEventAdapter> controllerBeforeEvent = new osgGA::GUIEventAdapter;
 			osg::ref_ptr<osgGA::GUIEventAdapter> controllerEvent = new osgGA::GUIEventAdapter;
 			osg::ref_ptr<osgGA::GUIEventAdapter> controllerAfterEvent = new osgGA::GUIEventAdapter;
@@ -89,14 +89,14 @@ public:
 			}
 			break;
 			case 3:
-				{
+			{
 				controllerEvent->setEventType(osgGA::GUIEventAdapter::DRAG);
 				controllerEvent->setButtonMask(osgGA::GUIEventAdapter::RIGHT_MOUSE_BUTTON);
 				controllerEvent->setX(0);
 				controllerEvent->setY(fake_position_y);
 				fake_position_y -= 1;
-				}
-				break;
+			}
+			break;
 			case 5:
 			{
 				controllerEvent->setEventType(osgGA::GUIEventAdapter::RELEASE);
@@ -149,14 +149,14 @@ public:
 			}
 			break;
 			default:
-				{
+			{
 				controllerEvent->setEventType(osgGA::GUIEventAdapter::RELEASE);
 				printf("release actiated!");
 				controllerEvent->setButtonMask(0);
-				}
+			}
 			}
 			_graphicsWindow->getEventQueue()->addEvent(controllerEvent);
-	    }
+		}
 		
         if (_graphicsWindow.valid() && _graphicsWindow->checkEvents())
         {

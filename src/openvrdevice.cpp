@@ -643,13 +643,13 @@ void OpenVRDevice::ProcessVREvent(const vr::VREvent_t& event)
 	break;
 	case vr::VREvent_ButtonPress:
 	{
-		
+
 		// 缩放
 		// 按到底为放大
 		if (event.data.controller.button == vr::EVRButtonId::k_EButton_SteamVR_Trigger)
 		{
 			// 主要用右手
-			if (controllerRole == vr::TrackedControllerRole_RightHand )
+			if (controllerRole == vr::TrackedControllerRole_RightHand)
 			{
 				// 按住grip键
 				if (controllerEventResult == 6) controllerEventResult = 3;
