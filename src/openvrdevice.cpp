@@ -644,22 +644,10 @@ void OpenVRDevice::ProcessVREvent(const vr::VREvent_t& event)
 	case vr::VREvent_ButtonPress:
 	{
 
-		// 缩放
-		// 按到底为放大
-		if (event.data.controller.button == vr::EVRButtonId::k_EButton_SteamVR_Trigger)
-		{
-			// 主要用右手
-			if (controllerRole == vr::TrackedControllerRole_RightHand)
-			{
-				// 按住grip键
-				if (controllerEventResult == 6) controllerEventResult = 3;
-				else controllerEventResult = 2;
-			}
-
-		}
-		// 使用touchpad进行旋转操作
+		// 缩放 touchpad 按下上下位置
+		// 使用touchpad 左右位置 进行 左右 旋转操作
 		// 直接返回touchpad的坐标
-		else if (event.data.controller.button == vr::k_EButton_SteamVR_Touchpad)
+		if (event.data.controller.button == vr::k_EButton_SteamVR_Touchpad)
 		{
 			m_vrSystem->GetControllerState(event.trackedDeviceIndex, &state, sizeof(state));
 			if (m_touchpadPreTouchPosition.x() != state.rAxis->x || m_touchpadPreTouchPosition.y() != state.rAxis->y)
@@ -668,26 +656,39 @@ void OpenVRDevice::ProcessVREvent(const vr::VREvent_t& event)
 				m_touchpadTouchPosition.set(state.rAxis->x, state.rAxis->y);
 				printf("touchPad previous position %d,%d", m_touchpadPreTouchPosition.x(), m_touchpadPreTouchPosition.y());
 			}
-			controllerEventResult = 1;
+			controllerEventResult = OpenVRDevice::Touchpad_Press;
 		}
-		else if (event.data.controller.button == vr::k_EButton_Grip)
+		/*else if (event.data.controller.button == vr::k_EButton_Grip)
 		{
 			controllerEventResult = 6;
+		}*/
+		else if (event.data.controller.button == vr::EVRButtonId::k_EButton_SteamVR_Trigger)
+		{
+			// 主要用右手
+			if (controllerRole == vr::TrackedControllerRole_RightHand)
+			{
+				controllerEventResult = Trigger_Press;
+			}
+
 		}
 	}
 	break;
+	// 直到按键弹起后，其他按键才有效
 	case vr::VREvent_ButtonUnpress:
 	{
 		// 右手
 		if (controllerRole == vr::TrackedControllerRole_RightHand)
 		{
 			// touchpad 松开，旋转结束
-			if (event.data.controller.button == vr::k_EButton_SteamVR_Touchpad ||
-				event.data.controller.button == vr::k_EButton_Grip)
+			if (event.data.controller.button == vr::k_EButton_SteamVR_Touchpad)
 			{
 				printf("TrackedControllerRole_RightHand unpress.\n", event.trackedDeviceIndex);
 
-				controllerEventResult = 5;
+				controllerEventResult = OpenVRDevice::Touchpad_Unpress;
+			}
+			else if (event.data.controller.button == vr::k_EButton_SteamVR_Trigger)
+			{
+				controllerEventResult = OpenVRDevice::Trigger_Unpress;
 			}
 		}
 	}

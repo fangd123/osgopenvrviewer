@@ -22,6 +22,7 @@ public:
 		openvrDevice = openvr;
 		fake_position_x = 0;
 		fake_position_y = 0;
+		trigger = false;
     }
 
     virtual void eventTraversal()
@@ -33,7 +34,7 @@ public:
 		// 按下trigger时，进行旋转
 		// 按下trackpad时，进行缩放
 		// TODO 按下trigger并触摸trackpad时，进行平移
-		if (openvrDevice->controllerEventResult != 0)
+		if (openvrDevice->controllerEventResult != -1)
 		{
 			osg::ref_ptr<osgGA::GUIEventAdapter> controllerBeforeEvent = new osgGA::GUIEventAdapter;
 			osg::ref_ptr<osgGA::GUIEventAdapter> controllerEvent = new osgGA::GUIEventAdapter;
@@ -41,111 +42,76 @@ public:
 
 			controllerBeforeEvent->setEventType(osgGA::GUIEventAdapter::PUSH);
 			controllerAfterEvent->setEventType(osgGA::GUIEventAdapter::RELEASE);
+
 			switch (openvrDevice->controllerEventResult)
 			{
 
-			case 1:
+			// Touchpad 按下
+			case OpenVRDevice::Touchpad_Press:
 			{
-
-				controllerEvent->setEventType(osgGA::GUIEventAdapter::DRAG);
 				double angle = VectorAngle(openvrDevice->m_touchpadTouchPosition);
-				if (angle > 45 && angle < 135)
+				
+				TouchpadLocation location = GetTouchpadLocation(angle);
+				controllerEvent->setEventType(osgGA::GUIEventAdapter::DRAG);
+
+				if(location == UP)
 				{
-					printf("down");
+					if(trigger)
+						controllerEvent->setButtonMask(osgGA::GUIEventAdapter::MIDDLE_MOUSE_BUTTON);
+					else
+						controllerEvent->setButtonMask(osgGA::GUIEventAdapter::RIGHT_MOUSE_BUTTON);
+					
 					controllerEvent->setY(fake_position_y);
-
 				}
-				//上  
-				if (angle < -45 && angle > -135)
+				else if (location == DOWN)
 				{
-					printf("up");
+					if (trigger)
+						controllerEvent->setButtonMask(osgGA::GUIEventAdapter::MIDDLE_MOUSE_BUTTON);
+					else
+						controllerEvent->setButtonMask(osgGA::GUIEventAdapter::RIGHT_MOUSE_BUTTON);
 					controllerEvent->setY(-fake_position_y);
+				}
+				else if (location == LEFT)
+				{
+					if (trigger)
+						controllerEvent->setButtonMask(osgGA::GUIEventAdapter::MIDDLE_MOUSE_BUTTON);
+					else
+						controllerEvent->setButtonMask(osgGA::GUIEventAdapter::RIGHT_MOUSE_BUTTON);
+					controllerEvent->setX(-fake_position_x);
 
 				}
-				//左  
-				if ((angle < 180 && angle > 135) || (angle < -135 && angle > -180))
+				else if (location == RIGHT)
 				{
+					if (trigger)
+						controllerEvent->setButtonMask(osgGA::GUIEventAdapter::MIDDLE_MOUSE_BUTTON);
+					else
+						controllerEvent->setButtonMask(osgGA::GUIEventAdapter::RIGHT_MOUSE_BUTTON);
 					controllerEvent->setX(fake_position_x);
-					printf("left");
 				}
-				//右  
-				if ((angle > 0 && angle < 45) || (angle > -45 && angle < 0))
-				{
-					controllerEvent->setX(-fake_position_x);
-				}
+
+				
 				fake_position_x += 1;
 				fake_position_y += 1;
-
-				controllerEvent->setButtonMask(osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON);
 			}
 			break;
-			case 2:
-			{
-				controllerEvent->setEventType(osgGA::GUIEventAdapter::DRAG);
-				controllerEvent->setButtonMask(osgGA::GUIEventAdapter::RIGHT_MOUSE_BUTTON);
-				controllerEvent->setX(0);
-				controllerEvent->setY(fake_position_y);
-				fake_position_y += 1;
-			}
-			break;
-			case 3:
-			{
-				controllerEvent->setEventType(osgGA::GUIEventAdapter::DRAG);
-				controllerEvent->setButtonMask(osgGA::GUIEventAdapter::RIGHT_MOUSE_BUTTON);
-				controllerEvent->setX(0);
-				controllerEvent->setY(fake_position_y);
-				fake_position_y -= 1;
-			}
-			break;
-			case 5:
+			case OpenVRDevice::Touchpad_Unpress:
 			{
 				controllerEvent->setEventType(osgGA::GUIEventAdapter::RELEASE);
 				controllerEvent->setButtonMask(0);
 				controllerEvent->setX(fake_position_x);
 				controllerEvent->setY(fake_position_y);
 				printf("the position is: %f,%f", controllerEvent->getX(), controllerEvent->getY());
+				trigger = false;
 			}
 			break;
-			case 6:
+			case OpenVRDevice::Trigger_Press:
 			{
-				controllerEvent->setEventType(osgGA::GUIEventAdapter::PUSH);
-				controllerEvent->setButtonMask(osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON);
+				if (trigger == false)
+					trigger = true;
 			}
-			break;
-			case 7:
+			case OpenVRDevice::Trigger_Unpress:
 			{
-
-				controllerEvent->setEventType(osgGA::GUIEventAdapter::DRAG);
-				double angle = VectorAngle(openvrDevice->m_touchpadTouchPosition);
-				if (angle > 45 && angle < 135)
-				{
-					printf("down");
-					controllerEvent->setY(fake_position_y);
-
-				}
-				//上  
-				if (angle < -45 && angle > -135)
-				{
-					printf("up");
-					controllerEvent->setY(-fake_position_y);
-
-				}
-				//左  
-				if ((angle < 180 && angle > 135) || (angle < -135 && angle > -180))
-				{
-					controllerEvent->setX(fake_position_x);
-					printf("left");
-				}
-				//右  
-				if ((angle > 0 && angle < 45) || (angle > -45 && angle < 0))
-				{
-					controllerEvent->setX(-fake_position_x);
-					printf("right");
-				}
-				fake_position_x += 1;
-				fake_position_y += 1;
-
-				controllerEvent->setButtonMask(osgGA::GUIEventAdapter::MIDDLE_MOUSE_BUTTON);
+				trigger = false;
 			}
 			break;
 			default:
@@ -196,6 +162,14 @@ private:
 
 	double fake_position_x;
 	double fake_position_y;
+	bool trigger;
+	typedef enum TouchpadLocation_
+	{
+		UP,
+		DOWN,
+		LEFT,
+		RIGHT
+	} TouchpadLocation;
 
 	double VectorAngle(osg::Vec2f &v2)
 	{
@@ -214,6 +188,35 @@ private:
 		}
 		return angle;
 	}
+	TouchpadLocation GetTouchpadLocation(double angle)
+	{
+		if (angle > 45 && angle < 135)
+		{
+			printf("down");
+			return DOWN;
+
+		}
+		//上  
+		if (angle < -45 && angle > -135)
+		{
+			printf("up");
+			return UP;
+
+		}
+		//左  
+		if ((angle < 180 && angle > 135) || (angle < -135 && angle > -180))
+		{
+			printf("left");
+			return LEFT;
+		}
+		//右  
+		if ((angle > 0 && angle < 45) || (angle > -45 && angle < 0))
+		{
+			controllerEvent->setX(-fake_position_x);
+			return RIGHT;
+		}
+	}
+
 };
 
 int main( int argc, char** argv )

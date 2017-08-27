@@ -133,6 +133,15 @@ public:
         COUNT = 2
     } Eye;
 
+	static typedef enum Action_
+	{
+		Touchpad_Press = 0,
+		Touchpad_Unpress= 1,
+		Trigger_Press = 2,
+		Trigger_Unpress = 3,
+
+
+	} Action;
 	// VR 环境模型
 	bool m_rbShowTrackedDevice[vr::k_unMaxTrackedDeviceCount];
 	int m_iTrackedControllerCount;
