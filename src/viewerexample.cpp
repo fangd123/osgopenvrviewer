@@ -27,13 +27,9 @@ public:
 
     virtual void eventTraversal()
     {
-
-
-		//printf("%u\n", openvrDevice->controllerEventResult);
 		// 添加VR事件响应，映射成鼠标事件
 		// 按下trigger时，进行旋转
 		// 按下trackpad时，进行缩放
-		// TODO 按下trigger并触摸trackpad时，进行平移
 		if (openvrDevice->controllerEventResult != -1)
 		{
 			osg::ref_ptr<osgGA::GUIEventAdapter> controllerBeforeEvent = new osgGA::GUIEventAdapter;
@@ -100,8 +96,7 @@ public:
 				controllerEvent->setButtonMask(0);
 				controllerEvent->setX(fake_position_x);
 				controllerEvent->setY(fake_position_y);
-				printf("the position is: %f,%f", controllerEvent->getX(), controllerEvent->getY());
-				trigger = false;
+				printf("the position is: %f,%f", controllerEvent->getX(), controllerEvent->getY()); 
 			}
 			break;
 			case OpenVRDevice::Trigger_Press:
