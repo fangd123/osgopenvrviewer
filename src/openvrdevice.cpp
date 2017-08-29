@@ -693,26 +693,6 @@ void OpenVRDevice::ProcessVREvent(const vr::VREvent_t& event)
 		}
 	}
 	break;
-	case vr::VREvent_ButtonTouch:
-	{
-		// 右手
-		if (controllerRole == vr::TrackedControllerRole_RightHand)
-		{
-			// touchpad 平移
-			if (event.data.controller.button == vr::k_EButton_SteamVR_Touchpad)
-			{
-				m_vrSystem->GetControllerState(event.trackedDeviceIndex, &state, sizeof(state));
-				if (m_touchpadPreTouchPosition.x() != state.rAxis->x || m_touchpadPreTouchPosition.y() != state.rAxis->y)
-				{
-					m_touchpadPreTouchPosition.set(m_touchpadTouchPosition.x(), m_touchpadTouchPosition.y());
-					m_touchpadTouchPosition.set(state.rAxis->x, state.rAxis->y);
-					printf("touchPad previous position %d,%d", m_touchpadPreTouchPosition.x(), m_touchpadPreTouchPosition.y());
-					controllerEventResult = 7;
-				}
-			}
-		}
-		else controllerEventResult = 0;
-	}
 	}
 }
 

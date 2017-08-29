@@ -90,13 +90,17 @@ public:
 				fake_position_y += 1;
 			}
 			break;
+			// 按键弹起后，首先释放release消息
+			// 然后复位所有信息
 			case OpenVRDevice::Touchpad_Unpress:
 			{
 				controllerEvent->setEventType(osgGA::GUIEventAdapter::RELEASE);
 				controllerEvent->setButtonMask(0);
 				controllerEvent->setX(fake_position_x);
 				controllerEvent->setY(fake_position_y);
-				printf("the position is: %f,%f", controllerEvent->getX(), controllerEvent->getY()); 
+				fake_position_x = 0;
+				fake_position_y = 0;
+				openvrDevice->controllerEventResult = -1;
 			}
 			break;
 			case OpenVRDevice::Trigger_Press:
@@ -107,6 +111,13 @@ public:
 			case OpenVRDevice::Trigger_Unpress:
 			{
 				trigger = false;
+				controllerEvent->setEventType(osgGA::GUIEventAdapter::RELEASE);
+				controllerEvent->setButtonMask(0);
+				controllerEvent->setX(fake_position_x);
+				controllerEvent->setY(fake_position_y);
+				fake_position_x = 0;
+				fake_position_y = 0;
+				openvrDevice->controllerEventResult = -1;
 			}
 			break;
 			default:
