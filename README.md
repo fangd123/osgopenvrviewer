@@ -1,6 +1,8 @@
 OsgOpenVRViewer
 ===============
 
+*This is forked from [rhabacker/osgopenvrviewer](https://github.com/rhabacker/osgopenvrviewer)*
+
 An OsgViewer with support for viewing a scene graph on devices compatible with OpenVR/SteamVR 
 
 This project is partly based on the work done here https://github.com/bjornblissing/osgoculusviewer 
